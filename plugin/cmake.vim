@@ -2,11 +2,14 @@
 " Maintainer: Nathan Lanza <https://github.com/lanza>
 " Version:    0.1
 
+
 if exists("g:loaded_vim_cmake")
   finish
 else
   let g:loaded_vim_cmake = 1
 endif
+
+let g:cmake_target = ""
 
 let g:cmake_export_compile_commands = 1
 let g:cmake_build_dir = "build"
@@ -27,11 +30,25 @@ endfunction
 
 function! s:cmake_build()
   let l:command = 'cmake --build ' . g:cmake_build_dir
+  if g:cmake_target
+    let l:command += ' ' . g:cmake_target
+  endif
   silent let l:res = system(l:command)
   echo l:res
 endfunction
 
+function! s:cmake_target(target)
+  let g:cmake_target = a:target
+endfunction
 
+function! s:cmake_run()
+  let l:command = 'build/' . g:cmake_target
+  silent let l:res = system(l:command)
+  echo l:res
+endfunction
+
+command! -nargs=0 -complete=shellcmd CMakeRun call s:cmake_run()
+command! -nargs=1 -complete=shellcmd CMakeTarget call s:cmake_target(<f-args>)
 command! -nargs=0 -complete=shellcmd CMakeBuild call s:cmake_build()
 command! -nargs=0 -complete=shellcmd CMakeConfigureAndGenerate call s:cmake_configure_and_generate()
 
