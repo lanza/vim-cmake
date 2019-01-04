@@ -47,6 +47,12 @@ function! s:cmake_run()
   echo l:res
 endfunction
 
+function! s:cmake_debug()
+  let l:path = "build/" . g:cmake_target
+  exec("GdbStartLLDB lldb " . l:path)
+endfunction
+
+command! -nargs=0 -complete=shellcmd CMakeDebug call s:cmake_debug()
 command! -nargs=0 -complete=shellcmd CMakeRun call s:cmake_run()
 command! -nargs=1 -complete=shellcmd CMakeTarget call s:cmake_target(<f-args>)
 command! -nargs=0 -complete=shellcmd CMakeBuild call s:cmake_build()
