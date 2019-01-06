@@ -7,7 +7,7 @@ if exists("g:loaded_vim_cmake")
   finish
 else
   let g:loaded_vim_cmake = 1
-  !mkdir -p  ~/.local/share/vim-cmake
+  call system("mkdir -p  ~/.local/share/vim-cmake")
 endif
 
 let g:cmake_target = ""
