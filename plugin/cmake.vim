@@ -17,6 +17,8 @@ if filereadable($HOME . "/.local/share/vim-cmake/file")
   if len(s:cache_file)
     let g:cmake_target = s:cache_file[0]
   endif
+else
+  call system("touch ~/.local/share/vim-cmake/file")
 endif
 
 let g:cmake_export_compile_commands = 1
