@@ -12,8 +12,8 @@ endif
 
 let g:cmake_target = ""
 
-if filereadable("~/.local/share/vim-cmake/file")
-  let s:cache_file = readfile("~/.local/share/vim-cmake/file")
+if filereadable($HOME . "/.local/share/vim-cmake/file")
+  let s:cache_file = readfile($HOME . "/.local/share/vim-cmake/file")
   if len(s:cache_file)
     let g:cmake_target = s:cache_file[0]
   endif
@@ -49,7 +49,7 @@ function! s:cmake_target(target)
   let g:cmake_target = a:target
   let l:list = []
   call add(l:list, g:cmake_target)
-  call writefile(l:list, "~/.local/share/vim-cmake/file")
+  call writefile(l:list, $HOME . "/.local/share/vim-cmake/file")
 endfunction
 
 function! s:cmake_run()
