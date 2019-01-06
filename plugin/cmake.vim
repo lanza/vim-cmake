@@ -33,7 +33,8 @@ function! s:cmake_configure_and_generate()
 
   let l:argument_string = join(l:arguments, " ")
 
-  let l:command = 'cmake' . ' -B ' . g:cmake_build_dir . ' -S . ' . l:argument_string
+  let l:command = 'cmake ' . l:argument_string . ' -B' . g:cmake_build_dir . ' -H.'
+  echo l:command
   silent let l:res = system(l:command)
   echo l:res 
 endfunction
