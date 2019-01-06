@@ -7,13 +7,13 @@ if exists("g:loaded_vim_cmake")
   finish
 else
   let g:loaded_vim_cmake = 1
-  !mkdir -p /Users/lanza/.local/share/vim-cmake
+  !mkdir -p  ~/.local/share/vim-cmake
 endif
 
 let g:cmake_target = ""
 
-if filereadable("/Users/lanza/.local/share/vim-cmake/file")
-  let s:cache_file = readfile("/Users/lanza/.local/share/vim-cmake/file")
+if filereadable("~/.local/share/vim-cmake/file")
+  let s:cache_file = readfile("~/.local/share/vim-cmake/file")
   if len(s:cache_file)
     let g:cmake_target = s:cache_file[0]
   endif
@@ -49,7 +49,7 @@ function! s:cmake_target(target)
   let g:cmake_target = a:target
   let l:list = []
   call add(l:list, g:cmake_target)
-  call writefile(l:list, "/Users/lanza/.local/share/vim-cmake/file")
+  call writefile(l:list, "~/.local/share/vim-cmake/file")
 endfunction
 
 function! s:cmake_run()
