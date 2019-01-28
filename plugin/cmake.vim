@@ -34,9 +34,10 @@ function! s:cmake_configure_and_generate()
   let l:argument_string = join(l:arguments, " ")
 
   let l:command = 'cmake ' . l:argument_string . ' -B' . g:cmake_build_dir . ' -H.'
-  echo l:command
-  silent let l:res = system(l:command)
-  echo l:res 
+  "echo l:command
+  " silent let l:res = system(l:command)
+  " echo l:res 
+  exec "Dispatch " . l:command
 endfunction
 
 function! s:cmake_build()
@@ -44,8 +45,9 @@ function! s:cmake_build()
   if g:cmake_target
     let l:command += ' ' . g:cmake_target
   endif
-  silent let l:res = system(l:command)
-  echo l:res
+  exec "Dispatch " . l:command
+  " silent let l:res = system(l:command)
+  " echo l:res
 endfunction
 
 function! s:cmake_target(target)
@@ -57,8 +59,9 @@ endfunction
 
 function! s:cmake_run()
   let l:command = 'build/' . g:cmake_target
-  silent let l:res = system(l:command)
-  echo l:res
+  " silent let l:res = system(l:command)
+  " echo l:res
+  exec "Dispatch " . l:command
 endfunction
 
 function! s:cmake_debug()
