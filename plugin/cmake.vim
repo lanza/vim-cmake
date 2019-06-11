@@ -56,10 +56,18 @@ else
 endif
 
 let g:cmake_export_compile_commands = 1
-let g:cmake_build_dir = "build"
+let g:cmake_build_dir = "build/Debug"
+if !isdirectory(g:cmake_build_dir)
+  let g:cmake_build_dir = "build"
+endif
 let g:cmake_generator = "Ninja"
 
 function! g:Parse_codemodel_json()
+  if !isdirectory(g:cmake_build_dir . '/.cmake/api/v1/reply')
+    echom "Must configure and generate first"
+    call s:assure_query_reply()
+    return 0
+  endif
   let g:cmake_query_response = g:cmake_build_dir . "/.cmake/api/v1/reply/"
   let l:codemodel_file = globpath(g:cmake_query_response, "codemodel*")
   let l:codemodel_contents = readfile(l:codemodel_file)
@@ -81,26 +89,38 @@ function! g:Parse_codemodel_json()
     let l:file = readfile(g:cmake_query_response . l:jsonFile)
     let l:json_string = join(l:file, "\n")
     let l:target_file_data = s:decode_json(l:json_string)
-    let l:artifacts = l:target_file_data["artifacts"]
-    let l:artifact = l:artifacts[0]
-    let l:path = l:artifact["path"]
-    let l:type = l:target_file_data["type"]
-    if l:type == "Executable"
-      call add(g:execs, {l:name : l:path})
+    if has_key(l:target_file_data, "artifacts")
+      let l:artifacts = l:target_file_data["artifacts"]
+      let l:artifact = l:artifacts[0]
+      let l:path = l:artifact["path"]
+      let l:type = l:target_file_data["type"]
+      if l:type == "Executable"
+        call add(g:execs, {l:name : l:path})
+      endif
+      call add(g:tars, {l:name : l:path})
     endif
-    call add(g:tars, {l:name : l:path})
   endfor
+  return 1
+endfunction
+
+function! s:make_query_files()
+  if !isdirectory(g:cmake_build_dir . "/.cmake/api/v1/query")
+    call mkdir(g:cmake_build_dir . "/.cmake/api/v1/query", "p")
+  endif
+  if !filereadable(g:cmake_build_dir . "/.cmake/api/v1/query/codemodel-v2")
+    call writefile([" "], g:cmake_build_dir . "/.cmake/api/v1/query/codemodel-v2")
+  endif
+endfunction
+
+function! s:assure_query_reply()
+  if !isdirectory(g:cmake_build_dir . "/.cmake/api/v1/reply")
+    call s:cmake_configure_and_generate()
+  endif
 endfunction
 
 
-
 function! s:cmake_configure_and_generate()
-  if !isdirectory(g:cmake_build_dir . "/.cmake/api/v1/query")
-    call mkdir(g:cmake_build_dir . "/.cmake/api/v1/query")
-  endif
-  if !filereadable(g:cmake_build_dir . "/.cmake/api/v1/query/codemodel-v2")
-    call writefile(g:cmake_build_dir . "/.cmake/api/v1/query/codemodel-v2")
-  endif
+  call s:make_query_files()
   let l:arguments = []
   let l:arguments += ["-G " . g:cmake_generator]
   let l:arguments += ["-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"]
@@ -113,11 +133,31 @@ function! s:cmake_configure_and_generate()
   " silent let l:res = system(l:command)
   " echo l:res 
   exec "Dispatch " . l:command
-  call g:Parse_codemodel_json()
+endfunction
+
+function! s:cmake_build_target()
+  if !g:Parse_codemodel_json()
+    return
+  endif
+  let l:command = '!cmake --build ' . g:cmake_build_dir . ' --target'
+  let l:names = []
+  for target in g:execs
+    let l:name = keys(target)[0]
+    call add(l:names, l:name)
+  endfor
+
+  set makeprg=ninja
+  let g:makeshift_root = g:cmake_build_dir
+  let b:makeshift_root = g:cmake_build_dir
+  call fzf#run({'source': l:names, 'sink': l:command , 'down': len(l:names) + 2})
+  ". l:command
+  " silent let l:res = system(l:command)
+  " echo l:res
 endfunction
 
 function! s:cmake_build()
   let l:command = 'cmake --build ' . g:cmake_build_dir
+
   if g:cmake_target
     let l:command += ' ' . g:cmake_target
   endif
@@ -145,11 +185,19 @@ function! s:cmake_run()
 endfunction
 
 function! s:start_lldb(target)
-  exec "GdbStartLLDB lldb " . g:cmake_build_dir . "/" . a:target
+  try
+    exec "!cmake --build " . g:cmake_build_dir . ' --target ' . a:target
+  catch /.*/
+    echo "Failed to build " . a:target
+  finally
+    exec "GdbStartLLDB lldb " . g:cmake_build_dir . "/" . a:target
+  endtry
 endfunction
 
 function! s:cmake_debug()
-  call Parse_codemodel_json()
+  if !g:Parse_codemodel_json()
+    return
+  endif
   let l:names = []
 
   for target in g:execs
@@ -165,6 +213,7 @@ command! -nargs=0 -complete=shellcmd CMakeDebug call s:cmake_debug()
 command! -nargs=0 -complete=shellcmd CMakeRun call s:cmake_run()
 command! -nargs=1 -complete=shellcmd CMakeTarget call s:cmake_target(<f-args>)
 command! -nargs=0 -complete=shellcmd CMakeBuild call s:cmake_build()
+command! -nargs=0 -complete=shellcmd CMakeBuildTarget call s:cmake_build_target()
 command! -nargs=0 -complete=shellcmd CMakeConfigureAndGenerate call s:cmake_configure_and_generate()
 
 if 0
