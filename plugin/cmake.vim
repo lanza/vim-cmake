@@ -82,6 +82,7 @@ function! g:Parse_codemodel_json()
 
   let g:execs = []
   let g:tars = []
+  let g:all_tars = []
 
   for target in targets_dicts
     let l:jsonFile = target["jsonFile"]
@@ -98,6 +99,9 @@ function! g:Parse_codemodel_json()
         call add(g:execs, {l:name : l:path})
       endif
       call add(g:tars, {l:name : l:path})
+    else
+      let l:type = l:target_file_data["type"]
+      call add(g:all_tars , {l:name : l:type})
     endif
   endfor
   return 1
@@ -141,7 +145,27 @@ function! s:cmake_build_target()
   endif
   let l:command = '!cmake --build ' . g:cmake_build_dir . ' --target'
   let l:names = []
-  for target in g:execs
+  for target in g:tars
+    let l:name = keys(target)[0]
+    call add(l:names, l:name)
+  endfor
+
+  set makeprg=ninja
+  let g:makeshift_root = g:cmake_build_dir
+  let b:makeshift_root = g:cmake_build_dir
+  call fzf#run({'source': l:names, 'sink': l:command , 'down': len(l:names) + 2})
+  ". l:command
+  " silent let l:res = system(l:command)
+  " echo l:res
+endfunction
+
+function! s:cmake_build_non_artifacts()
+  if !g:Parse_codemodel_json()
+    return
+  endif
+  let l:command = '!cmake --build ' . g:cmake_build_dir . ' --target'
+  let l:names = []
+  for target in g:all_tars
     let l:name = keys(target)[0]
     call add(l:names, l:name)
   endfor
@@ -214,6 +238,7 @@ command! -nargs=0 -complete=shellcmd CMakeRun call s:cmake_run()
 command! -nargs=1 -complete=shellcmd CMakeTarget call s:cmake_target(<f-args>)
 command! -nargs=0 -complete=shellcmd CMakeBuild call s:cmake_build()
 command! -nargs=0 -complete=shellcmd CMakeBuildTarget call s:cmake_build_target()
+command! -nargs=0 -complete=shellcmd CMakeBuildNonArtifacts call s:cmake_build_non_artifacts()
 command! -nargs=0 -complete=shellcmd CMakeConfigureAndGenerate call s:cmake_configure_and_generate()
 
 if 0
