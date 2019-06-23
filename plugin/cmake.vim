@@ -285,7 +285,12 @@ function! s:start_lldb(target)
   catch /.*/
     echo "Failed to build " . a:target
   finally
-    exec "GdbStartLLDB lldb " . g:cmake_build_dir . "/" . a:target . " -s /tmp/lldbinitvimcmake -- " . l:args
+    if exists("l:init_file")
+      let l:lldb_init_arg = " -s /tmp/lldbinitvimcmake "
+    else
+      let l:lldb_init_arg = ""
+    endif
+    exec "GdbStartLLDB lldb " . g:cmake_build_dir . "/" . a:target . l:lldb_init_arg . ' -- ' . l:args
   endtry
 endfunction
 
