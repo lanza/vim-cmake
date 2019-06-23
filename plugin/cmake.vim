@@ -37,30 +37,27 @@ function! s:encode_json(object) abort
 endfunction
 
 
-" if exists("g:loaded_vim_cmake")
-"   finish
-" else
+if exists("g:loaded_vim_cmake")
+  finish
+else
   let g:loaded_vim_cmake = 1
   call system("mkdir -p  ~/.local/share/vim-cmake")
-"endif
+endif
 
 let g:cmake_target = ""
 
-if filereadable($HOME . "/.local/share/vim-cmake/file")
-  let s:cache_file = readfile($HOME . "/.local/share/vim-cmake/file")
-  if len(s:cache_file)
-    let g:cmake_target = s:cache_file[0]
-  endif
-else
-  call system("touch ~/.local/share/vim-cmake/file")
-endif
 
-let g:cmake_export_compile_commands = 1
-let g:cmake_build_dir = "build/Debug"
-if !isdirectory(g:cmake_build_dir)
-  let g:cmake_build_dir = "build"
-endif
-let g:cmake_generator = "Ninja"
+function! s:get_cache_file()
+  if exists("g:cmake_cache_file")
+    return g:cmake_cache_file
+  endif
+  let g:vim_cmake_cache_file_path = $HOME . "/.vim_cmake.json"
+  let l:contents = readfile(g:vim_cmake_cache_file_path)
+  let l:json_string = join(l:contents, "\n")
+
+  let g:cmake_cache_file = s:decode_json(l:json_string)
+  return g:cmake_cache_file
+endfunction
 
 function! g:Parse_codemodel_json()
   if !isdirectory(g:cmake_build_dir . '/.cmake/api/v1/reply')
@@ -84,6 +81,8 @@ function! g:Parse_codemodel_json()
   let g:tars = []
   let g:all_tars = []
 
+  let g:tar_to_file = {}
+
   for target in targets_dicts
     let l:jsonFile = target["jsonFile"]
     let l:name = target["name"]
@@ -99,6 +98,7 @@ function! g:Parse_codemodel_json()
         call add(g:execs, {l:name : l:path})
       endif
       call add(g:tars, {l:name : l:path})
+      let g:tar_to_file[l:name] = l:path
     else
       let l:type = l:target_file_data["type"]
       call add(g:all_tars , {l:name : l:type})
@@ -106,6 +106,23 @@ function! g:Parse_codemodel_json()
   endfor
   return 1
 endfunction
+
+let s:cache_file = s:get_cache_file()
+if has_key(s:cache_file, getcwd())
+  let dir = s:cache_file[getcwd()]
+  if has_key(dir, "current_target")
+    let g:cmake_target = dir["current_target"]
+  else
+    let g:cmake_target = ""
+  endif
+endif
+
+let g:cmake_export_compile_commands = 1
+let g:cmake_build_dir = "build/Debug"
+if !isdirectory(g:cmake_build_dir)
+  let g:cmake_build_dir = "build"
+endif
+let g:cmake_generator = "Ninja"
 
 function! s:make_query_files()
   if !isdirectory(g:cmake_build_dir . "/.cmake/api/v1/query")
@@ -194,11 +211,40 @@ function! s:cmake_build()
   " echo l:res
 endfunction
 
-function! s:cmake_target(target)
-  let g:cmake_target = a:target
-  let l:list = []
-  call add(l:list, g:cmake_target)
-  call writefile(l:list, $HOME . "/.local/share/vim-cmake/file")
+function! s:update_cache_file()
+  let cache = s:get_cache_file()
+  let serial = s:encode_json(cache)
+  let split = split(serial, "\n")
+  call writefile(split, $HOME . "/.vim_cmake.json")
+endfunction
+
+function! s:cmake_target()
+  if !g:Parse_codemodel_json()
+    return
+  endif
+  let l:names = []
+  for target in g:tars
+    let l:name = keys(target)[0]
+    call add(l:names, l:name)
+  endfor
+
+  set makeprg=ninja
+  call fzf#run({'source': l:names, 'sink': function('s:update_target'), 'down': len(l:names) + 2})
+endfunction
+
+
+function! s:update_target(target)
+  echom a:target
+  let g:cmake_target = g:cmake_build_dir . '/' . g:tar_to_file[a:target]
+
+  let cache = s:get_cache_file()
+  if !has_key(cache, getcwd())
+    let cache[getcwd()] = {"current_target": g:cmake_target, "targets":{}}
+  else
+    let dir = cache[getcwd()]
+    let dir["current_target"] = g:cmake_target
+  endif
+  call s:update_cache_file()
 endfunction
 
 function! s:cmake_run()
@@ -209,12 +255,37 @@ function! s:cmake_run()
 endfunction
 
 function! s:start_lldb(target)
+  let l:args = ""
+  let l:data = s:get_cache_file()
+  if has_key(l:data, getcwd())
+    let l:dir = l:data[getcwd()]["targets"]
+    if has_key(l:dir, g:cmake_build_dir . "/" . a:target)
+      let l:target = l:dir[g:cmake_build_dir . "/" . a:target]
+      if has_key(l:target, "args")
+        let l:args = l:target["args"]
+        echo l:args
+      endif
+      if has_key(l:target, "breakpoints")
+        let l:breakpoints = l:target["breakpoints"]
+        let l:commands = []
+        for b in l:breakpoints
+          if b["enabled"]
+            let break = "b " . b["text"]
+            call add(l:commands, break)
+          endif
+        endfor
+        call add(l:commands, "r")
+        let l:init_file = "/tmp/lldbinitvimcmake"
+        let l:f = writefile(l:commands, l:init_file)
+      endif
+    endif
+  endif
   try
     exec "!cmake --build " . g:cmake_build_dir . ' --target ' . a:target
   catch /.*/
     echo "Failed to build " . a:target
   finally
-    exec "GdbStartLLDB lldb " . g:cmake_build_dir . "/" . a:target
+    exec "GdbStartLLDB lldb " . g:cmake_build_dir . "/" . a:target . " -s /tmp/lldbinitvimcmake -- " . l:args
   endtry
 endfunction
 
@@ -233,20 +304,141 @@ function! s:cmake_debug()
 endfunction
 
 
+function! g:Cmake_edit_breakpoints()
+  if !exists("g:vui_breakpoints")
+    let l:cache_file = s:get_cache_file()
+    if has_key(l:cache_file, getcwd())
+      let g:vui_breakpoints = l:cache_file[getcwd()]["targets"]
+    else
+      let g:vui_breakpoints = {}
+    endif
+    let g:vui_bp_mode = 'all'
+  endif
+
+  let screen = vui#screen#new()
+  let screen.mode = g:vui_bp_mode
+
+  function! screen.new_breakpoint()
+    let breakpoint = input("Breakpoint: ")
+
+    if len(breakpoint) == 0
+      return
+    endif
+
+    let bp = {"text": breakpoint, "enabled": 1}
+
+    if !has_key(g:vui_breakpoints, g:cmake_target)
+      let g:vui_breakpoints[g:cmake_target] = {"breakpoints": []}
+    endif
+
+    call add(g:vui_breakpoints[g:cmake_target]["breakpoints"], bp)
+    call s:update_cache_file()
+    return bp
+  endfunction
+
+  function! screen.delete_breakpoint()
+    if !has_key(self.get_focused_element(), 'is_breakpoint')
+      return
+    endif
+
+    let l:index = index(g:vui_breakpoints[g:cmake_target]["breakpoints"], self.get_focused_element().item)
+
+    if l:index == -1
+      return
+    endif
+
+    call s:update_cache_file()
+    call remove(g:vui_breakpoints[g:cmake_target]["breakpoints"], l:index)
+  endfunction
+
+  function! screen.visible_breakpoints()
+    let visible = []
+    if !has_key(g:vui_breakpoints, g:cmake_target)
+      let g:vui_breakpoints[g:cmake_target] = {"breakpoints": []}
+    endif
+
+    for i in range(0, len(g:vui_breakpoints[g:cmake_target]["breakpoints"]) - 1)
+      let breakpoint = g:vui_breakpoints[g:cmake_target]["breakpoints"][i]
+      if breakpoint.enabled && self.mode == 'enabled'
+        continue
+      endif
+      call add(visible, breakpoint)
+    endfor
+
+    return visible
+  endfunction
+
+  function! screen.toggle_mode()
+    let self.mode = self.mode == 'all' ? 'enabled' : 'all'
+    let g:vui_bp_mode = self.mode
+  endfunction
+
+  function! screen.render_breakpoints(container, breakpoints)
+    call a:container.clear_children()
+
+    for i in range(0, len(a:breakpoints) - 1)
+      let breakpoint = a:breakpoints[i]
+      let toggle = vui#component#toggle#new(breakpoint.text)
+      let toggle.is_breakpoint = 1
+      let toggle.item = breakpoint
+
+      call toggle.set_checked(toggle.item.enabled)
+      function! toggle.on_change(toggle)
+        let a:toggle.item.enabled = a:toggle.item.enabled ? 0 : 1
+        call s:update_cache_file()
+      endfunction
+
+      call a:container.add_child(toggle)
+    endfor
+  endfunction
+
+  function! screen.on_before_render(screen)
+    let width = winwidth(0)
+    let height = winheight(0)
+
+    let subtitle = g:vui_bp_mode == 'all' ? ' - ALL' : ' - ENABLED'
+
+    let main_panel = vui#component#panel#new('BREAKPOINTS' . subtitle, width, height)
+    let content = main_panel.get_content_component()
+    let container = vui#component#vcontainer#new()
+    let add_button = vui#component#button#new('[Add Breakpoint]')
+
+    let breakpoints = self.visible_breakpoints()
+    call add_button.set_y(len(breakpoints) == 0 ? 0 : len(breakpoints) + 1)
+
+    function! add_button.on_action(button)
+      call b:screen.new_breakpoint()
+    endfunction
+
+    call content.add_child(container)
+    call content.add_child(add_button)
+    call a:screen.render_breakpoints(container, breakpoints)
+    call a:screen.set_root_component(main_panel)
+  endfunction
+
+  function! screen.on_before_create_buffer(foo)
+    execute "40wincmd v"
+  endfunction
+
+  call screen.map('a', 'new_breakpoint')
+  call screen.map('m', 'toggle_mode')
+  call screen.map('dd', 'delete_breakpoint')
+  call screen.show()
+endfunction
+
+function! s:cmake_args(...)
+  let s = join(a:000, " ")
+  let c = s:get_cache_file()
+  let c[getcwd()]["targets"][g:cmake_target]["args"] = s
+  call s:update_cache_file()
+endfunction
+
+command! -nargs=* -complete=shellcmd CMakeArgs call s:cmake_args(<f-args>)
 command! -nargs=0 -complete=shellcmd CMakeDebug call s:cmake_debug()
 command! -nargs=0 -complete=shellcmd CMakeRun call s:cmake_run()
-command! -nargs=1 -complete=shellcmd CMakeTarget call s:cmake_target(<f-args>)
+command! -nargs=0 -complete=shellcmd CMakeTarget call s:cmake_target()
 command! -nargs=0 -complete=shellcmd CMakeBuild call s:cmake_build()
 command! -nargs=0 -complete=shellcmd CMakeBuildTarget call s:cmake_build_target()
 command! -nargs=0 -complete=shellcmd CMakeBuildNonArtifacts call s:cmake_build_non_artifacts()
 command! -nargs=0 -complete=shellcmd CMakeConfigureAndGenerate call s:cmake_configure_and_generate()
-
-if 0
-  command! -nargs=1 -complete=shellcmd GdbStartLLDB call nvimgdb#Spawn('lldb', 'lldbwrap.sh', <q-args>)
-
-  if !exists('g:nvimgdb_disable_start_keymaps') || !g:nvimgdb_disable_start_keymaps
-    nnoremap <leader>dd :GdbStart gdb -q a.out
-    nnoremap <leader>dl :GdbStartLLDB lldb a.out
-    nnoremap <leader>dp :GdbStartPDB python -m pdb main.py
-  endif
-endif
+command! -nargs=0 -complete=shellcmd CMakeBreakpoints call g:Cmake_edit_breakpoints()
