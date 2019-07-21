@@ -181,7 +181,12 @@ endfunction
 function! s:cmake_compile_current_file()
   let l:current_path = s:get_path_to_current_buffer()
   let l:rel_path = s:get_build_relative_path(l:current_path)
-  exec '!ninja -C ' . g:cmake_build_dir . ' ' . l:rel_path . '^'
+  let &makeprg = "ninja -C " .  g:cmake_build_dir . ' ' . l:rel_path . '^'
+  Make
+  if !has('gui_running')
+    redraw!
+  endif
+
 endfunction
 
 function! s:cmake_configure_and_generate()
@@ -233,15 +238,17 @@ function! s:cmake_build()
   let l:command = 'cmake --build ' . g:cmake_build_dir
 
   if g:cmake_target
-    let l:command += ' ' . g:cmake_target
+    let l:command += ' --target ' . g:cmake_target
   endif
-  set makeprg=ninja
-  let g:makeshift_root = g:cmake_build_dir
-  let b:makeshift_root = g:cmake_build_dir
-  exec "MakeshiftBuild" 
+  let &makeprg = l:command
+  " let g:makeshift_root = g:cmake_build_dir
+  " let b:makeshift_root = g:cmake_build_dir
+  "exec "MakeshiftBuild" 
   ". l:command
   " silent let l:res = system(l:command)
-  " echo l:res
+
+  Make
+
 endfunction
 
 function! s:update_cache_file()
