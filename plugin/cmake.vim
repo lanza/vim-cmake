@@ -139,8 +139,7 @@ function! s:assure_query_reply()
   endif
 endfunction
 
-
-function! s:cmake_configure_and_generate()
+function! s:get_cmake_argument_string()
   call s:make_query_files()
   let l:arguments = []
   let l:arguments += ["-G " . g:cmake_generator]
@@ -148,11 +147,18 @@ function! s:cmake_configure_and_generate()
   let l:arguments += ["-DCMAKE_BUILD_TYPE=Debug"]
 
   let l:argument_string = join(l:arguments, " ")
+  let l:command = l:argument_string . ' -B ' . g:cmake_build_dir . ' -S .'
+  return l:command
+endfunction
 
-  let l:command = 'cmake ' . l:argument_string . ' -B' . g:cmake_build_dir . ' -H.'
-  "echo l:command
-  " silent let l:res = system(l:command)
-  " echo l:res 
+function! s:cmdb_configure_and_generate()
+  "echo 'CMDB ' . s:get_cmake_argument_string()
+  exec 'CMDB ' . s:get_cmake_argument_string()
+endfunction
+
+
+function! s:cmake_configure_and_generate()
+  let l:command = 'cmake ' . s:get_cmake_argument_string()
   exec "Dispatch " . l:command
 endfunction
 
@@ -446,4 +452,5 @@ command! -nargs=0 -complete=shellcmd CMakeBuild call s:cmake_build()
 command! -nargs=0 -complete=shellcmd CMakeBuildTarget call s:cmake_build_target()
 command! -nargs=0 -complete=shellcmd CMakeBuildNonArtifacts call s:cmake_build_non_artifacts()
 command! -nargs=0 -complete=shellcmd CMakeConfigureAndGenerate call s:cmake_configure_and_generate()
+command! -nargs=0 -complete=shellcmd CMDBConfigureAndGenerate call s:cmdb_configure_and_generate()
 command! -nargs=0 -complete=shellcmd CMakeBreakpoints call g:Cmake_edit_breakpoints()
