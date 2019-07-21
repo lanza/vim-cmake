@@ -288,10 +288,7 @@ function! s:update_target(target)
 endfunction
 
 function! s:cmake_run()
-  let l:command = 'build/' . g:cmake_target
-  " silent let l:res = system(l:command)
-  " echo l:res
-  exec "Dispatch " . l:command
+  exec "Dispatch " . g:cmake_target
 endfunction
 
 function! s:start_lldb(target)
