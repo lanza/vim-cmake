@@ -156,6 +156,33 @@ function! s:cmdb_configure_and_generate()
   exec 'CMDB ' . s:get_cmake_argument_string()
 endfunction
 
+python3 << endpython
+import os
+import vim
+
+def get_build_relative_path(build, path):
+    path = os.path.relpath(path, build)
+    vim.command('return "%s"' % path)
+
+def get_path_to_current_buffer():
+    path = vim.current.buffer.name
+    vim.command('return "%s"' % path)
+endpython
+
+function! s:get_path_to_current_buffer()
+  python3 get_path_to_current_buffer()
+endfunction
+
+function! s:get_build_relative_path(current_path)
+  python3 get_build_relative_path(vim.eval('g:cmake_build_dir'), vim.eval('a:current_path'))
+endfunction
+
+
+function! s:cmake_compile_current_file()
+  let l:current_path = s:get_path_to_current_buffer()
+  let l:rel_path = s:get_build_relative_path(l:current_path)
+  exec '!ninja -C ' . g:cmake_build_dir . ' ' . l:rel_path . '^'
+endfunction
 
 function! s:cmake_configure_and_generate()
   let l:command = 'cmake ' . s:get_cmake_argument_string()
@@ -445,6 +472,7 @@ function! s:cmake_args(...)
 endfunction
 
 command! -nargs=* -complete=shellcmd CMakeArgs call s:cmake_args(<f-args>)
+command! -nargs=0 -complete=shellcmd CMakeCompileFile call s:cmake_compile_current_file()
 command! -nargs=0 -complete=shellcmd CMakeDebug call s:cmake_debug()
 command! -nargs=0 -complete=shellcmd CMakeRun call s:cmake_run()
 command! -nargs=0 -complete=shellcmd CMakeTarget call s:cmake_target()
