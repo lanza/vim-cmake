@@ -190,6 +190,9 @@ function! s:cmake_compile_current_file()
   endif
 endfunction
 
+function g:CMake_configure_and_generate()
+  call s:cmake_configure_and_generate()
+endfunction
 function! s:cmake_configure_and_generate()
   let l:command = 'cmake ' . s:get_cmake_argument_string()
   exec "Dispatch " . l:command
@@ -488,7 +491,7 @@ function! s:get_cwd_cache()
   if !has_key(c, getcwd())
     let c[getcwd()] = {"targets" : {}}
   endif
-  return c
+  return c[getcwd()]
 endfunction
 
 function! s:get_source_dir()
