@@ -41,7 +41,6 @@ if exists("g:loaded_vim_cmake")
   finish
 else
   let g:loaded_vim_cmake = 1
-  call system("mkdir -p  ~/.local/share/vim-cmake")
 endif
 
 let g:cmake_target = ""
@@ -52,20 +51,25 @@ function! s:get_cache_file()
     return g:cmake_cache_file
   endif
   let g:vim_cmake_cache_file_path = $HOME . "/.vim_cmake.json"
-  let l:contents = readfile(g:vim_cmake_cache_file_path)
-  let l:json_string = join(l:contents, "\n")
+  if filereadable(g:vim_cmake_cache_file_path)
+    let l:contents = readfile(g:vim_cmake_cache_file_path)
+    let l:json_string = join(l:contents, "\n")
 
-  let g:cmake_cache_file = s:decode_json(l:json_string)
+    let g:cmake_cache_file = s:decode_json(l:json_string)
+  else
+    let g:cmake_cache_file = s:decode_json("{}")
+  endif
   return g:cmake_cache_file
 endfunction
 
 function! g:Parse_codemodel_json()
-  if !isdirectory(g:cmake_build_dir . '/.cmake/api/v1/reply')
+  let l:build_dir = s:get_build_dir()
+  if !isdirectory(l:build_dir . '/.cmake/api/v1/reply')
     echom "Must configure and generate first"
     call s:assure_query_reply()
     return 0
   endif
-  let g:cmake_query_response = g:cmake_build_dir . "/.cmake/api/v1/reply/"
+  let g:cmake_query_response = l:build_dir . "/.cmake/api/v1/reply/"
   let l:codemodel_file = globpath(g:cmake_query_response, "codemodel*")
   let l:codemodel_contents = readfile(l:codemodel_file)
   let l:json_string = join(l:codemodel_contents, "\n")
@@ -118,24 +122,21 @@ if has_key(s:cache_file, getcwd())
 endif
 
 let g:cmake_export_compile_commands = 1
-let g:cmake_build_dir = "build/Debug"
-let g:cmake_source_dir = "."
-if !isdirectory(g:cmake_build_dir)
-  let g:cmake_build_dir = "build"
-endif
 let g:cmake_generator = "Ninja"
 
 function! s:make_query_files()
-  if !isdirectory(g:cmake_build_dir . "/.cmake/api/v1/query")
-    call mkdir(g:cmake_build_dir . "/.cmake/api/v1/query", "p")
+  let l:build_dir = s:get_build_dir()
+  if !isdirectory(l:build_dir . "/.cmake/api/v1/query")
+    call mkdir(l:build_dir . "/.cmake/api/v1/query", "p")
   endif
-  if !filereadable(g:cmake_build_dir . "/.cmake/api/v1/query/codemodel-v2")
-    call writefile([" "], g:cmake_build_dir . "/.cmake/api/v1/query/codemodel-v2")
+  if !filereadable(l:build_dir . "/.cmake/api/v1/query/codemodel-v2")
+    call writefile([" "], l:build_dir . "/.cmake/api/v1/query/codemodel-v2")
   endif
 endfunction
 
 function! s:assure_query_reply()
-  if !isdirectory(g:cmake_build_dir . "/.cmake/api/v1/reply")
+  let l:build_dir = s:get_build_dir()
+  if !isdirectory(l:build_dir . "/.cmake/api/v1/reply")
     call s:cmake_configure_and_generate()
   endif
 endfunction
@@ -148,7 +149,7 @@ function! s:get_cmake_argument_string()
   let l:arguments += ["-DCMAKE_BUILD_TYPE=Debug"]
 
   let l:argument_string = join(l:arguments, " ")
-  let l:command = l:argument_string . ' -B ' . g:cmake_build_dir . ' -S ' . g:cmake_source_dir
+  let l:command = l:argument_string . ' -B ' . s:get_build_dir() . ' -S ' . s:get_source_dir()
   return l:command
 endfunction
 
@@ -175,19 +176,18 @@ function! s:get_path_to_current_buffer()
 endfunction
 
 function! s:get_build_relative_path(current_path)
-  python3 get_build_relative_path(vim.eval('g:cmake_build_dir'), vim.eval('a:current_path'))
+  python3 get_build_relative_path(vim.call('s:get_build_dir()'), vim.eval('a:current_path'))
 endfunction
 
 
 function! s:cmake_compile_current_file()
   let l:current_path = s:get_path_to_current_buffer()
   let l:rel_path = s:get_build_relative_path(l:current_path)
-  let &makeprg = "ninja -C " .  g:cmake_build_dir . ' ' . l:rel_path . '^'
+  let &makeprg = "ninja -C " .  s:get_build_dir() . ' ' . l:rel_path . '^'
   Make
   if !has('gui_running')
     redraw!
   endif
-
 endfunction
 
 function! s:cmake_configure_and_generate()
@@ -199,7 +199,7 @@ function! s:cmake_build_target()
   if !g:Parse_codemodel_json()
     return
   endif
-  let l:command = '!cmake --build ' . g:cmake_build_dir . ' --target'
+  let l:command = '!cmake --build ' . s:get_build_dir() . ' --target'
   let l:names = []
   for target in g:tars
     let l:name = keys(target)[0]
@@ -207,8 +207,6 @@ function! s:cmake_build_target()
   endfor
 
   set makeprg=ninja
-  let g:makeshift_root = g:cmake_build_dir
-  let b:makeshift_root = g:cmake_build_dir
   call fzf#run({'source': l:names, 'sink': l:command , 'down': len(l:names) + 2})
   ". l:command
   " silent let l:res = system(l:command)
@@ -219,7 +217,7 @@ function! s:cmake_build_non_artifacts()
   if !g:Parse_codemodel_json()
     return
   endif
-  let l:command = '!cmake --build ' . g:cmake_build_dir . ' --target'
+  let l:command = '!cmake --build ' . s:get_build_dir() . ' --target'
   let l:names = []
   for target in g:all_tars
     let l:name = keys(target)[0]
@@ -227,8 +225,6 @@ function! s:cmake_build_non_artifacts()
   endfor
 
   set makeprg=ninja
-  let g:makeshift_root = g:cmake_build_dir
-  let b:makeshift_root = g:cmake_build_dir
   call fzf#run({'source': l:names, 'sink': l:command , 'down': len(l:names) + 2})
   ". l:command
   " silent let l:res = system(l:command)
@@ -236,15 +232,12 @@ function! s:cmake_build_non_artifacts()
 endfunction
 
 function! s:cmake_build()
-  let l:command = 'cmake --build ' . g:cmake_build_dir
+  let l:command = 'cmake --build ' . s:get_build_dir()
 
   if g:cmake_target
     let l:command += ' --target ' . g:cmake_target
   endif
   let &makeprg = l:command
-  " let g:makeshift_root = g:cmake_build_dir
-  " let b:makeshift_root = g:cmake_build_dir
-  "exec "MakeshiftBuild" 
   ". l:command
   " silent let l:res = system(l:command)
 
@@ -276,7 +269,7 @@ endfunction
 
 function! s:update_target(target)
   echom a:target
-  let g:cmake_target = g:cmake_build_dir . '/' . g:tar_to_file[a:target]
+  let g:cmake_target = s:get_build_dir() . '/' . g:tar_to_file[a:target]
 
   let cache = s:get_cache_file()
   if !has_key(cache, getcwd())
@@ -297,8 +290,8 @@ function! s:start_lldb(target)
   let l:data = s:get_cache_file()
   if has_key(l:data, getcwd())
     let l:dir = l:data[getcwd()]["targets"]
-    if has_key(l:dir, g:cmake_build_dir . "/" . a:target)
-      let l:target = l:dir[g:cmake_build_dir . "/" . a:target]
+    if has_key(l:dir, s:get_build_dir() . "/" . a:target)
+      let l:target = l:dir[s:get_build_dir() . "/" . a:target]
       if has_key(l:target, "args")
         let l:args = l:target["args"]
         echo l:args
@@ -319,7 +312,7 @@ function! s:start_lldb(target)
     endif
   endif
   try
-    exec "!cmake --build " . g:cmake_build_dir . ' --target ' . a:target
+    exec "!cmake --build " . s:get_build_dir() . ' --target ' . a:target
   catch /.*/
     echo "Failed to build " . a:target
   finally
@@ -328,7 +321,7 @@ function! s:start_lldb(target)
     else
       let l:lldb_init_arg = ""
     endif
-    exec "GdbStartLLDB lldb " . g:cmake_build_dir . "/" . a:target . l:lldb_init_arg . ' -- ' . l:args
+    exec "GdbStartLLDB lldb " . s:get_build_dir() . "/" . a:target . l:lldb_init_arg . ' -- ' . l:args
   endtry
 endfunction
 
@@ -476,6 +469,38 @@ function! s:cmake_args(...)
   call s:update_cache_file()
 endfunction
 
+function! s:cmake_set_build_dir(...)
+  let dir = a:1
+  let c = s:get_cache_file()[getcwd()]
+  let c["build_dir"] = dir
+  call s:update_cache_file()
+endfunction
+
+function! s:cmake_set_source_dir(...)
+  let dir = a:1
+  let c = s:get_cache_file()
+  let c["source_dir"] = dir
+  call s:update_cache_file()
+endfunction
+
+function! s:get_source_dir()
+  let c = s:get_cache_file()[getcwd()]
+  if !has_key(c, "source_dir")
+    let c["source_dir"] = "."
+  endif
+  return c["source_dir"]
+endfunction
+
+function! s:get_build_dir()
+  let c = s:get_cache_file()[getcwd()]
+  if !has_key(c, "build_dir")
+    let c["build_dir"] = "build"
+  endif
+  return c["build_dir"]
+endfunction
+
+command! -nargs=1 -complete=shellcmd CMakeSetBuildDir call s:cmake_set_build_dir(<f-args>)
+command! -nargs=1 -complete=shellcmd CMakeSetSourceDir call s:cmake_set_source_dir(<f-args>)
 command! -nargs=* -complete=shellcmd CMakeArgs call s:cmake_args(<f-args>)
 command! -nargs=0 -complete=shellcmd CMakeCompileFile call s:cmake_compile_current_file()
 command! -nargs=0 -complete=shellcmd CMakeDebug call s:cmake_debug()
