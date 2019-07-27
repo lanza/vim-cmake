@@ -471,20 +471,28 @@ endfunction
 
 function! s:cmake_set_build_dir(...)
   let dir = a:1
-  let c = s:get_cache_file()[getcwd()]
+  let c = s:get_cwd_cache()
   let c["build_dir"] = dir
   call s:update_cache_file()
 endfunction
 
 function! s:cmake_set_source_dir(...)
   let dir = a:1
-  let c = s:get_cache_file()
+  let c = s:get_cwd_cache()
   let c["source_dir"] = dir
   call s:update_cache_file()
 endfunction
 
+function! s:get_cwd_cache()
+  let c = s:get_cache_file()
+  if !has_key(c, getcwd())
+    let c[getcwd()] = {"targets" : {}}
+  endif
+  return c
+endfunction
+
 function! s:get_source_dir()
-  let c = s:get_cache_file()[getcwd()]
+  let c = s:get_cwd_cache()
   if !has_key(c, "source_dir")
     let c["source_dir"] = "."
   endif
@@ -492,7 +500,7 @@ function! s:get_source_dir()
 endfunction
 
 function! s:get_build_dir()
-  let c = s:get_cache_file()[getcwd()]
+  let c = s:get_cwd_cache()
   if !has_key(c, "build_dir")
     let c["build_dir"] = "build"
   endif
