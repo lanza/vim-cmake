@@ -507,6 +507,128 @@ function! s:get_build_dir()
   return c["build_dir"]
 endfunction
 
+function! g:Cmake_edit_args()
+  if !exists("g:vui_args")
+    let l:cache_file = s:get_cache_file()
+    if has_key(l:cache_file, getcwd())
+      let g:vui_breakpoints = s:get_cwd_cache()["targets"]
+    else
+      let g:vui_breakpoints = {}
+    endif
+    let g:vui_bp_mode = 'all'
+  endif
+
+  let screen = vui#screen#new()
+  let screen.mode = g:vui_bp_mode
+
+  function! screen.new_breakpoint()
+    let breakpoint = input("Breakpoint: ")
+
+    if len(breakpoint) == 0
+      return
+    endif
+
+    let bp = {"text": breakpoint, "enabled": 1}
+
+    if !has_key(g:vui_breakpoints, g:cmake_target)
+      let g:vui_breakpoints[g:cmake_target] = {"breakpoints": []}
+    endif
+
+    call add(g:vui_breakpoints[g:cmake_target]["breakpoints"], bp)
+    call s:update_cache_file()
+    return bp
+  endfunction
+
+  function! screen.delete_breakpoint()
+    if !has_key(self.get_focused_element(), 'is_breakpoint')
+      return
+    endif
+
+    let l:index = index(g:vui_breakpoints[g:cmake_target]["breakpoints"], self.get_focused_element().item)
+
+    if l:index == -1
+      return
+    endif
+
+    call s:update_cache_file()
+    call remove(g:vui_breakpoints[g:cmake_target]["breakpoints"], l:index)
+  endfunction
+
+  function! screen.visible_breakpoints()
+    let visible = []
+    if !has_key(g:vui_breakpoints, g:cmake_target)
+      let g:vui_breakpoints[g:cmake_target] = {"breakpoints": []}
+    endif
+
+    for i in range(0, len(g:vui_breakpoints[g:cmake_target]["breakpoints"]) - 1)
+      let breakpoint = g:vui_breakpoints[g:cmake_target]["breakpoints"][i]
+      if breakpoint.enabled && self.mode == 'enabled'
+        continue
+      endif
+      call add(visible, breakpoint)
+    endfor
+
+    return visible
+  endfunction
+
+  function! screen.toggle_mode()
+    let self.mode = self.mode == 'all' ? 'enabled' : 'all'
+    let g:vui_bp_mode = self.mode
+  endfunction
+
+  function! screen.render_breakpoints(container, breakpoints)
+    call a:container.clear_children()
+
+    for i in range(0, len(a:breakpoints) - 1)
+      let breakpoint = a:breakpoints[i]
+      let toggle = vui#component#toggle#new(breakpoint.text)
+      let toggle.is_breakpoint = 1
+      let toggle.item = breakpoint
+
+      call toggle.set_checked(toggle.item.enabled)
+      function! toggle.on_change(toggle)
+        let a:toggle.item.enabled = a:toggle.item.enabled ? 0 : 1
+        call s:update_cache_file()
+      endfunction
+
+      call a:container.add_child(toggle)
+    endfor
+  endfunction
+
+  function! screen.on_before_render(screen)
+    let width = winwidth(0)
+    let height = winheight(0)
+
+    let subtitle = g:vui_bp_mode == 'all' ? ' - ALL' : ' - ENABLED'
+
+    let main_panel = vui#component#panel#new('BREAKPOINTS' . subtitle, width, height)
+    let content = main_panel.get_content_component()
+    let container = vui#component#vcontainer#new()
+    let add_button = vui#component#button#new('[Add Breakpoint]')
+
+    let breakpoints = self.visible_breakpoints()
+    call add_button.set_y(len(breakpoints) == 0 ? 0 : len(breakpoints) + 1)
+
+    function! add_button.on_action(button)
+      call b:screen.new_breakpoint()
+    endfunction
+
+    call content.add_child(container)
+    call content.add_child(add_button)
+    call a:screen.render_breakpoints(container, breakpoints)
+    call a:screen.set_root_component(main_panel)
+  endfunction
+
+  function! screen.on_before_create_buffer(foo)
+    execute "40wincmd v"
+  endfunction
+
+  call screen.map('a', 'new_breakpoint')
+  call screen.map('m', 'toggle_mode')
+  call screen.map('dd', 'delete_breakpoint')
+  call screen.show()
+endfunction
+
 command! -nargs=1 -complete=shellcmd CMakeSetBuildDir call s:cmake_set_build_dir(<f-args>)
 command! -nargs=1 -complete=shellcmd CMakeSetSourceDir call s:cmake_set_source_dir(<f-args>)
 command! -nargs=* -complete=shellcmd CMakeArgs call s:cmake_args(<f-args>)
