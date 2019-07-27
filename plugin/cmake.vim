@@ -119,6 +119,7 @@ endif
 
 let g:cmake_export_compile_commands = 1
 let g:cmake_build_dir = "build/Debug"
+let g:cmake_source_dir = "."
 if !isdirectory(g:cmake_build_dir)
   let g:cmake_build_dir = "build"
 endif
@@ -147,7 +148,7 @@ function! s:get_cmake_argument_string()
   let l:arguments += ["-DCMAKE_BUILD_TYPE=Debug"]
 
   let l:argument_string = join(l:arguments, " ")
-  let l:command = l:argument_string . ' -B ' . g:cmake_build_dir . ' -S .'
+  let l:command = l:argument_string . ' -B ' . g:cmake_build_dir . ' -S ' . g:cmake_source_dir
   return l:command
 endfunction
 
