@@ -522,7 +522,7 @@ endfunction
 function! s:get_build_dir()
   let c = s:get_cwd_cache()
   if !has_key(c, "build_dir")
-    let c["build_dir"] = "build"
+    let c["build_dir"] = "build/Debug"
   endif
   return c["build_dir"]
 endfunction
