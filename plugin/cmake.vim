@@ -112,14 +112,11 @@ function! g:Parse_codemodel_json()
 endfunction
 
 let s:cache_file = s:get_cache_file()
-if has_key(s:cache_file, getcwd())
-  let dir = s:cache_file[getcwd()]
-  if has_key(dir, "current_target")
-    let g:cmake_target = dir["current_target"]
-  else
-    let g:cmake_target = ""
-  endif
-endif
+try
+  let g:cmake_target = s:cache_file[getcwd()].current_target
+catch /.*/
+  let g:cmake_target = ""
+endtry
 
 let g:cmake_export_compile_commands = 1
 let g:cmake_generator = "Ninja"
@@ -467,9 +464,25 @@ endfunction
 
 function! s:cmake_args(...)
   let s = join(a:000, " ")
-  let c = s:get_cache_file()
-  let c[getcwd()]["targets"][g:cmake_target]["args"] = s
+  let c = s:get_target_cache()
+  let c["args"] = s
   call s:update_cache_file()
+endfunction
+
+function!  s:get_targets_cache()
+  let c = s:get_cwd_cache()
+  if !has_key(c, "targets")
+    let c["targets"] = {}
+  endif
+  return c["targets"]
+endfunction
+
+function! s:get_target_cache()
+  let c = s:get_targets_cache()
+  if !has_key(c, g:cmake_target)
+    let c[g:cmake_target] = {}
+  endif
+  return c[g:cmake_target]
 endfunction
 
 function! s:cmake_set_build_dir(...)
