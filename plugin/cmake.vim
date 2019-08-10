@@ -463,6 +463,10 @@ function! g:Cmake_edit_breakpoints()
 endfunction
 
 function! s:cmake_args(...)
+  if g:cmake_target == ""
+    echo "Please set g:cmake_target first"
+    return
+  endif
   let s = join(a:000, " ")
   let c = s:get_target_cache()
   let c["args"] = s
