@@ -74,6 +74,10 @@ function! g:Parse_codemodel_json()
   let l:codemodel_contents = readfile(l:codemodel_file)
   let l:json_string = join(l:codemodel_contents, "\n")
 
+  if len(l:json_string) == 0
+    return
+  endif
+
   let l:data = s:decode_json(l:json_string)
 
   let l:configurations = l:data["configurations"]
@@ -464,7 +468,7 @@ endfunction
 
 function! s:cmake_args(...)
   if g:cmake_target == ""
-    echo "Please set g:cmake_target first"
+    call s:cmake_target()
     return
   endif
   let s = join(a:000, " ")
