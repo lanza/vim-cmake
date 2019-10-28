@@ -196,7 +196,7 @@ function g:CMake_configure_and_generate()
 endfunction
 function! s:cmake_configure_and_generate()
   let l:command = 'cmake ' . s:get_cmake_argument_string()
-  exec "terminal " . l:command
+  exe "vs | exe \"normal \<c-w>L\" terminal " . l:command
 endfunction
 
 function! s:cmake_build_target()
@@ -286,7 +286,7 @@ function! s:update_target(target)
 endfunction
 
 function! s:cmake_run()
-  exec "terminal " . g:cmake_target
+  exe "vs | exe \"normal \<c-w>L\" terminal " . g:cmake_target
 endfunction
 
 function! s:start_lldb(target)
