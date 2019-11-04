@@ -8,13 +8,12 @@ function! s:decode_json(string) abort
   endif
   let [null, false, true] = ['', 0, 1]
   let stripped = substitute(a:string,'\C"\(\\.\|[^"\\]\)*"','','g')
-  if stripped !~# "[^,:{}\\[\\]0-9.\\-+Eaeflnr-u \n\r\t]"
+  if stripped !~# '[^,:{}\\[\\]0-9.\\-+Eaeflnr-u \n\r\t]'
     try
-      return eval(substitute(a:string,"[\r\n]"," ",'g'))
+      return eval(substitute(a:string,'[\r\n]',' ','g'))
     catch
     endtry
   endif
-  call s:throw("invalid JSON: ".a:string)
 endfunction
 
 function! s:encode_json(object) abort
@@ -37,27 +36,27 @@ function! s:encode_json(object) abort
 endfunction
 
 
-if exists("g:loaded_vim_cmake")
+if exists('g:loaded_vim_cmake')
   finish
 else
   let g:loaded_vim_cmake = 1
 endif
 
-let g:cmake_target = ""
+let g:cmake_target = ''
 
 
 function! s:get_cache_file()
-  if exists("g:cmake_cache_file")
+  if exists('g:cmake_cache_file')
     return g:cmake_cache_file
   endif
-  let g:vim_cmake_cache_file_path = $HOME . "/.vim_cmake.json"
+  let g:vim_cmake_cache_file_path = $HOME . '/.vim_cmake.json'
   if filereadable(g:vim_cmake_cache_file_path)
     let l:contents = readfile(g:vim_cmake_cache_file_path)
     let l:json_string = join(l:contents, "\n")
 
     let g:cmake_cache_file = s:decode_json(l:json_string)
   else
-    let g:cmake_cache_file = s:decode_json("{}")
+    let g:cmake_cache_file = s:decode_json('{}')
   endif
   return g:cmake_cache_file
 endfunction
@@ -65,7 +64,7 @@ endfunction
 function! g:Parse_codemodel_json()
   let l:build_dir = s:get_build_dir()
   if !isdirectory(l:build_dir . '/.cmake/api/v1/reply')
-    echom "Must configure and generate first"
+    echom 'Must configure and generate first'
     call s:assure_query_reply()
     return 0
   endif
@@ -496,46 +495,46 @@ endfunction
 function! s:cmake_set_build_dir(...)
   let dir = a:1
   let c = s:get_cwd_cache()
-  let c["build_dir"] = dir
+  let c['build_dir'] = dir
   call s:update_cache_file()
 endfunction
 
 function! s:cmake_set_source_dir(...)
   let dir = a:1
   let c = s:get_cwd_cache()
-  let c["source_dir"] = dir
+  let c['source_dir'] = dir
   call s:update_cache_file()
 endfunction
 
 function! s:get_cwd_cache()
   let c = s:get_cache_file()
   if !has_key(c, getcwd())
-    let c[getcwd()] = {"targets" : {}}
+    let c[getcwd()] = {'targets' : {}}
   endif
   return c[getcwd()]
 endfunction
 
 function! s:get_source_dir()
   let c = s:get_cwd_cache()
-  if !has_key(c, "source_dir")
-    let c["source_dir"] = "."
+  if !has_key(c, 'source_dir')
+    let c['source_dir'] = '.'
   endif
-  return c["source_dir"]
+  return c['source_dir']
 endfunction
 
 function! s:get_build_dir()
   let c = s:get_cwd_cache()
-  if !has_key(c, "build_dir")
-    let c["build_dir"] = "build/Debug"
+  if !has_key(c, 'build_dir')
+    let c['build_dir'] = 'build/Debug'
   endif
-  return c["build_dir"]
+  return c['build_dir']
 endfunction
 
 function! g:Cmake_edit_args()
-  if !exists("g:vui_args")
+  if !exists('g:vui_args')
     let l:cache_file = s:get_cache_file()
     if has_key(l:cache_file, getcwd())
-      let g:vui_breakpoints = s:get_cwd_cache()["targets"]
+      let g:vui_breakpoints = s:get_cwd_cache()['targets']
     else
       let g:vui_breakpoints = {}
     endif
@@ -546,19 +545,19 @@ function! g:Cmake_edit_args()
   let screen.mode = g:vui_bp_mode
 
   function! screen.new_breakpoint()
-    let breakpoint = input("Breakpoint: ")
+    let breakpoint = input('Breakpoint: ')
 
     if len(breakpoint) == 0
       return
     endif
 
-    let bp = {"text": breakpoint, "enabled": 1}
+    let bp = {'text': breakpoint, 'enabled': 1}
 
     if !has_key(g:vui_breakpoints, g:cmake_target)
-      let g:vui_breakpoints[g:cmake_target] = {"breakpoints": []}
+      let g:vui_breakpoints[g:cmake_target] = {'breakpoints': []}
     endif
 
-    call add(g:vui_breakpoints[g:cmake_target]["breakpoints"], bp)
+    call add(g:vui_breakpoints[g:cmake_target]['breakpoints'], bp)
     call s:update_cache_file()
     return bp
   endfunction
@@ -623,7 +622,7 @@ function! g:Cmake_edit_args()
     let width = winwidth(0)
     let height = winheight(0)
 
-    let subtitle = g:vui_bp_mode == 'all' ? ' - ALL' : ' - ENABLED'
+    let subtitle = g:vui_bp_mode ==? 'all' ? ' - ALL' : ' - ENABLED'
 
     let main_panel = vui#component#panel#new('BREAKPOINTS' . subtitle, width, height)
     let content = main_panel.get_content_component()
@@ -644,7 +643,7 @@ function! g:Cmake_edit_args()
   endfunction
 
   function! screen.on_before_create_buffer(foo)
-    execute "40wincmd v"
+    execute '40wincmd v'
   endfunction
 
   call screen.map('a', 'new_breakpoint')
