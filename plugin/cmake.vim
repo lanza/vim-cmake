@@ -43,7 +43,7 @@ else
 endif
 
 let g:cmake_target = ''
-
+let g:cmake_arguments = []
 
 function! s:get_cache_file()
   if exists('g:cmake_cache_file')
@@ -144,6 +144,7 @@ endfunction
 function! s:get_cmake_argument_string()
   call s:make_query_files()
   let l:arguments = []
+  let l:arguments += g:cmake_arguments
   let l:arguments += ["-G " . g:cmake_generator]
   let l:arguments += ["-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"]
   let l:arguments += ["-DCMAKE_BUILD_TYPE=Debug"]
@@ -466,6 +467,10 @@ function! g:Cmake_edit_breakpoints()
 endfunction
 
 function! s:cmake_args(...)
+  let g:cmake_arguments = a:000
+endfunction
+
+function! s:cmake_target_args(...)
   if g:cmake_target == ""
     call s:cmake_target()
     return
@@ -655,6 +660,7 @@ endfunction
 command! -nargs=1 -complete=shellcmd CMakeSetBuildDir call s:cmake_set_build_dir(<f-args>)
 command! -nargs=1 -complete=shellcmd CMakeSetSourceDir call s:cmake_set_source_dir(<f-args>)
 command! -nargs=* -complete=shellcmd CMakeArgs call s:cmake_args(<f-args>)
+command! -nargs=* -complete=shellcmd CMakeTargetArgs call s:cmake_target_args(<f-args>)
 command! -nargs=0 -complete=shellcmd CMakeCompileFile call s:cmake_compile_current_file()
 command! -nargs=0 -complete=shellcmd CMakeDebug call s:cmake_debug()
 command! -nargs=0 -complete=shellcmd CMakeRun call s:cmake_run()
