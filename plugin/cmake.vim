@@ -292,7 +292,13 @@ endfunction
 
 function! s:cmake_run_target_with_name(target)
   let s:cmake_target = s:get_build_dir() . '/' . g:tar_to_file[a:target]
-  exe "vs | exe \"normal \<c-w>L\" | terminal " . s:cmake_target
+  try
+    exec "!cmake --build " . s:get_build_dir() . ' --target ' . a:target
+  catch /.*/
+    echo "Failed to build " . a:target
+  finally
+    exe "vs | exe \"normal \<c-w>L\" | terminal " . s:cmake_target
+  endtry
 endfunction
 
 function! s:cmake_run_target()
