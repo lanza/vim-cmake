@@ -256,20 +256,25 @@ function! s:update_cache_file()
   call writefile(split, $HOME . "/.vim_cmake.json")
 endfunction
 
-function! s:cmake_target()
-  if !g:Parse_codemodel_json()
-    return
-  endif
-  let l:names = []
-  for target in g:tars
-    let l:name = keys(target)[0]
-    call add(l:names, l:name)
-  endfor
+function! s:cmake_pick_target()
+  call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
+  return
+  " if !g:Parse_codemodel_json()
+  "   return
+  " endif
+  " let l:names = []
+  " for target in g:tars
+  "   let l:name = keys(target)[0]
+  "   call add(l:names, l:name)
+  " endfor
 
-  set makeprg=ninja
-  call fzf#run({'source': l:names, 'sink': function('s:update_target'), 'down': len(l:names) + 2})
+  " set makeprg=ninja
+  " call fzf#run({'source': l:names, 'sink': function('s:update_target'), 'down': len(l:names) + 2})
 endfunction
 
+function! s:cmake_run_current_target()
+  exe "vs | exe \"normal \<c-w>L\" | terminal " . g:cmake_target
+endfunction
 
 function! s:update_target(target)
   echom a:target
@@ -285,8 +290,31 @@ function! s:update_target(target)
   call s:update_cache_file()
 endfunction
 
-function! s:cmake_run()
-  exe "vs | exe \"normal \<c-w>L\" | terminal " . g:cmake_target
+function! s:cmake_run_target_with_name(target)
+  let s:cmake_target = s:get_build_dir() . '/' . g:tar_to_file[a:target]
+  exe "vs | exe \"normal \<c-w>L\" | terminal " . s:cmake_target
+endfunction
+
+function! s:cmake_run_target()
+  if !exists('g:execs')
+    call g:Parse_codemodel_json()
+  endif
+  call s:cmake_get_target_and_run_action(g:execs, 's:cmake_run_target_with_name')
+endfunction
+
+function! s:cmake_get_target_and_run_action(target_list, action)
+  if !g:Parse_codemodel_json()
+    return
+  endif
+  let l:names = []
+  for target in a:target_list
+    let l:name = keys(target)[0]
+    call add(l:names, l:name)
+  endfor
+
+  set makeprg=ninja
+  "call fzf#run({'source': l:names, 'sink': function('s:update_target'), 'down': len(l:names) + 2})
+  call fzf#run({'source': l:names, 'sink': function(a:action), 'down': len(l:names) + 2})
 endfunction
 
 function! s:start_lldb(target)
@@ -663,8 +691,9 @@ command! -nargs=* -complete=shellcmd CMakeArgs call s:cmake_args(<f-args>)
 command! -nargs=* -complete=shellcmd CMakeTargetArgs call s:cmake_target_args(<f-args>)
 command! -nargs=0 -complete=shellcmd CMakeCompileFile call s:cmake_compile_current_file()
 command! -nargs=0 -complete=shellcmd CMakeDebug call s:cmake_debug()
-command! -nargs=0 -complete=shellcmd CMakeRun call s:cmake_run()
-command! -nargs=0 -complete=shellcmd CMakeTarget call s:cmake_target()
+command! -nargs=0 -complete=shellcmd CMakeRunCurrentTarget call s:cmake_run_current_target()
+command! -nargs=0 -complete=shellcmd CMakeRunTarget call s:cmake_run_target()
+command! -nargs=0 -complete=shellcmd CMakePickTarget call s:cmake_pick_target()
 command! -nargs=0 -complete=shellcmd CMakeBuild call s:cmake_build()
 command! -nargs=0 -complete=shellcmd CMakeBuildTarget call s:cmake_build_target()
 command! -nargs=0 -complete=shellcmd CMakeBuildNonArtifacts call s:cmake_build_non_artifacts()
