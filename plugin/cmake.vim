@@ -294,7 +294,14 @@ function! s:cmake_pick_target()
 endfunction
 
 function! s:cmake_run_current_target()
-  exe "vs | exe \"normal \<c-w>L\" | terminal " . g:cmake_target
+  if len(g:cmake_target) == 0
+    echo "Please select a target and try again."
+    call g:Parse_codemodel_json()
+    call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
+  else
+    call s:cmake_build_current_target()
+    exe "vs | exe \"normal \<c-w>L\" | terminal " . g:cmake_target
+  endif
 endfunction
 
 function! s:update_target(target)
