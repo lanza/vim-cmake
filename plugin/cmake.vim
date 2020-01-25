@@ -201,6 +201,24 @@ function! s:cmake_configure_and_generate()
   exe "vs | exe \"normal \<c-w>L\" | terminal " . l:command
 endfunction
 
+function! s:cmake_build_current_target()
+  call g:Parse_codemodel_json()
+  if len(g:cmake_target) == 0
+    echo "Please select a target and try again."
+    call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
+  else
+    let l:tar = ""
+    if filereadable(g:cmake_target)
+      let l:key = substitute(g:cmake_target, s:get_build_dir() . '/', '', 0)
+      let l:tar = g:file_to_tar[l:key]
+    else
+      let l:tar = g:cmake_target
+    endif
+    let l:command = 'cmake --build ' . s:get_build_dir() . ' --target ' . l:tar
+    exe "silent !" . l:command
+  endif
+endfunction
+
 function! s:cmake_build_target()
   if !g:Parse_codemodel_json()
     return
