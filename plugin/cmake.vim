@@ -277,6 +277,7 @@ function! s:update_cache_file()
 endfunction
 
 function! s:cmake_pick_target()
+  call g:Parse_codemodel_json()
   call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
   return
   " if !g:Parse_codemodel_json()
