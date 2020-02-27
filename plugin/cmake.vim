@@ -255,7 +255,7 @@ function! s:cmake_build_non_artifacts()
   " echo l:res
 endfunction
 
-function! s:cmake_build()
+function! s:cmake_build_all()
   let l:command = 'cmake --build ' . s:get_build_dir()
 
   if g:cmake_target
@@ -528,11 +528,11 @@ function! g:Cmake_edit_breakpoints()
   call screen.show()
 endfunction
 
-function! s:cmake_args(...)
+function! s:cmake_set_cmake_args(...)
   let g:cmake_arguments = a:000
 endfunction
 
-function! s:cmake_target_args(...)
+function! s:cmake_set_current_target_run_args(...)
   if g:cmake_target == ""
     call s:cmake_target()
     return
@@ -719,18 +719,27 @@ function! g:Cmake_edit_args()
   call screen.show()
 endfunction
 
+command! -nargs=* -complete=shellcmd CMakeSetCMakeArgs call s:cmake_set_cmake_args(<f-args>)
 command! -nargs=1 -complete=shellcmd CMakeSetBuildDir call s:cmake_set_build_dir(<f-args>)
 command! -nargs=1 -complete=shellcmd CMakeSetSourceDir call s:cmake_set_source_dir(<f-args>)
-command! -nargs=* -complete=shellcmd CMakeArgs call s:cmake_args(<f-args>)
-command! -nargs=* -complete=shellcmd CMakeTargetArgs call s:cmake_target_args(<f-args>)
-command! -nargs=0 -complete=shellcmd CMakeCompileFile call s:cmake_compile_current_file()
-command! -nargs=0 -complete=shellcmd CMakeDebug call s:cmake_debug()
-command! -nargs=0 -complete=shellcmd CMakeRunCurrentTarget call s:cmake_run_current_target()
-command! -nargs=0 -complete=shellcmd CMakeRunTarget call s:cmake_run_target()
-command! -nargs=0 -complete=shellcmd CMakePickTarget call s:cmake_pick_target()
-command! -nargs=0 -complete=shellcmd CMakeBuild call s:cmake_build()
-command! -nargs=0 -complete=shellcmd CMakeBuildTarget call s:cmake_build_target()
-command! -nargs=0 -complete=shellcmd CMakeBuildNonArtifacts call s:cmake_build_non_artifacts()
+
 command! -nargs=0 -complete=shellcmd CMakeConfigureAndGenerate call s:cmake_configure_and_generate()
 command! -nargs=0 -complete=shellcmd CMDBConfigureAndGenerate call s:cmdb_configure_and_generate()
+
+command! -nargs=* -complete=shellcmd CMakeSetCurrentTargetRunArgs call s:cmake_set_current_target_run_args(<f-args>)
+command! -nargs=0 -complete=shellcmd CMakeCompileCurrentFile call s:cmake_compile_current_file()
+command! -nargs=0 -complete=shellcmd CMakeDebugWithNvimLLDB call s:cmake_debug()
+
+command! -nargs=0 -complete=shellcmd CMakePickTarget call s:cmake_pick_target()
+
+command! -nargs=0 -complete=shellcmd CMakeRunTarget call s:cmake_run_target()
+command! -nargs=0 -complete=shellcmd CMakeRunCurrentTarget call s:cmake_run_current_target()
+
+command! -nargs=0 -complete=shellcmd CMakeBuildAll call s:cmake_build_all()
+command! -nargs=0 -complete=shellcmd CMakeBuildTarget call s:cmake_build_target()
+command! -nargs=0 -complete=shellcmd CMakeBuildCurrentTarget call s:cmake_build_current_target()
+
+" I don't remember the purpose of this -- kill for now
+"command! -nargs=0 -complete=shellcmd CMakeBuildNonArtifacts call s:cmake_build_non_artifacts()
+
 command! -nargs=0 -complete=shellcmd CMakeBreakpoints call g:Cmake_edit_breakpoints()
