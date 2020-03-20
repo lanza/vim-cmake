@@ -261,12 +261,13 @@ function! s:cmake_build_all()
   if g:cmake_target
     let l:command += ' --target ' . g:cmake_target
   endif
-  let &makeprg = l:command
+  " let &makeprg = l:command
   ". l:command
   " silent let l:res = system(l:command)
 
-  Make
-
+  " Make
+  "
+  exe "vs | exe \"normal \<c-w>L\" | terminal " . l:command
 endfunction
 
 function! s:update_cache_file()
