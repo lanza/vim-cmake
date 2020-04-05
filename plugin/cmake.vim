@@ -278,6 +278,11 @@ if !exists("g:vim_cmake_build_tool")
   let g:vim_cmake_build_tool = "vsplit"
 endif
 
+function! s:cmake_clean()
+  let l:command = 'cmake --build ' . s:get_build_dir() . ' --target clean'
+  exe "vs | exe \"normal \<c-w>L\" | terminal " . l:command
+endfunction
+
 function! s:cmake_build_all()
   if g:vim_cmake_build_tool == "vsplit"
     " vsplit terminal implementation
@@ -774,6 +779,7 @@ command! -nargs=0 -complete=shellcmd CMakePickTarget call s:cmake_pick_target()
 command! -nargs=0 -complete=shellcmd CMakePickAndRunTarget call s:cmake_pick_and_run_target()
 command! -nargs=0 -complete=shellcmd CMakeRunCurrentTarget call s:cmake_run_current_target()
 
+command! -nargs=0 -complete=shellcmd CMakeClean call s:cmake_clean()
 command! -nargs=0 -complete=shellcmd CMakeBuildAll call s:cmake_build_all()
 command! -nargs=0 -complete=shellcmd CMakePickAndBuildTarget call s:cmake_pick_and_build_target()
 command! -nargs=0 -complete=shellcmd CMakeBuildCurrentTarget call s:cmake_build_current_target()
