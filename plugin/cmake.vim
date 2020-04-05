@@ -219,7 +219,7 @@ function! s:cmake_build_current_target()
   endif
 endfunction
 
-function! s:cmake_build_target()
+function! s:cmake_pick_and_build_target()
   if !g:Parse_codemodel_json()
     return
   endif
@@ -349,7 +349,7 @@ function! s:cmake_run_target_with_name(target)
   endtry
 endfunction
 
-function! s:cmake_run_target()
+function! s:cmake_pick_and_run_target()
   if !exists('g:execs')
     call g:Parse_codemodel_json()
   endif
@@ -752,11 +752,11 @@ command! -nargs=0 -complete=shellcmd CMakeDebugWithNvimLLDB call s:cmake_debug()
 
 command! -nargs=0 -complete=shellcmd CMakePickTarget call s:cmake_pick_target()
 
-command! -nargs=0 -complete=shellcmd CMakeRunTarget call s:cmake_run_target()
+command! -nargs=0 -complete=shellcmd CMakePickAndRunTarget call s:cmake_pick_and_run_target()
 command! -nargs=0 -complete=shellcmd CMakeRunCurrentTarget call s:cmake_run_current_target()
 
 command! -nargs=0 -complete=shellcmd CMakeBuildAll call s:cmake_build_all()
-command! -nargs=0 -complete=shellcmd CMakeBuildTarget call s:cmake_build_target()
+command! -nargs=0 -complete=shellcmd CMakePickAndBuildTarget call s:cmake_pick_and_build_target()
 command! -nargs=0 -complete=shellcmd CMakeBuildCurrentTarget call s:cmake_build_current_target()
 
 " I don't remember the purpose of this -- kill for now
