@@ -246,14 +246,12 @@ function! s:cmake_pick_and_build_target()
   if !g:Parse_codemodel_json()
     return
   endif
-  let l:command = '!cmake --build ' . s:get_build_dir() . ' --target'
   let l:names = []
   for target in g:tars
     let l:name = keys(target)[0]
     call add(l:names, l:name)
   endfor
 
-  set makeprg=ninja
   call fzf#run({'source': l:names, 'sink': function('s:_build_target'), 'down': len(l:names) + 2})
 endfunction
 
