@@ -68,8 +68,8 @@ function! g:Parse_codemodel_json()
     call s:assure_query_reply()
     return 0
   endif
-  let g:cmake_query_response = l:build_dir . "/.cmake/api/v1/reply/"
-  let l:codemodel_file = globpath(g:cmake_query_response, "codemodel*")
+  let g:cmake_query_response = l:build_dir . '/.cmake/api/v1/reply/'
+  let l:codemodel_file = globpath(g:cmake_query_response, 'codemodel*')
   let l:codemodel_contents = readfile(l:codemodel_file)
   let l:json_string = join(l:codemodel_contents, "\n")
 
@@ -79,9 +79,9 @@ function! g:Parse_codemodel_json()
 
   let l:data = s:decode_json(l:json_string)
 
-  let l:configurations = l:data["configurations"]
+  let l:configurations = l:data['configurations']
   let l:first_config = l:configurations[0]
-  let l:targets_dicts = l:first_config["targets"]
+  let l:targets_dicts = l:first_config['targets']
 
 
   let g:execs = []
@@ -92,24 +92,24 @@ function! g:Parse_codemodel_json()
   let g:file_to_tar = {}
 
   for target in targets_dicts
-    let l:jsonFile = target["jsonFile"]
-    let l:name = target["name"]
+    let l:jsonFile = target['jsonFile']
+    let l:name = target['name']
     let l:file = readfile(g:cmake_query_response . l:jsonFile)
-    let l:json_string = join(l:file, "\n")
+    let l:json_string = join(l:file, '\n')
     let l:target_file_data = s:decode_json(l:json_string)
-    if has_key(l:target_file_data, "artifacts")
-      let l:artifacts = l:target_file_data["artifacts"]
+    if has_key(l:target_file_data, 'artifacts')
+      let l:artifacts = l:target_file_data['artifacts']
       let l:artifact = l:artifacts[0]
-      let l:path = l:artifact["path"]
-      let l:type = l:target_file_data["type"]
-      if l:type == "Executable"
+      let l:path = l:artifact['path']
+      let l:type = l:target_file_data['type']
+      if l:type ==? 'Executable'
         call add(g:execs, {l:name : l:path})
       endif
       call add(g:tars, {l:name : l:path})
       let g:tar_to_file[l:name] = l:path
       let g:file_to_tar[l:path] = l:name
     else
-      let l:type = l:target_file_data["type"]
+      let l:type = l:target_file_data['type']
       call add(g:all_tars , {l:name : l:type})
     endif
   endfor
@@ -120,25 +120,25 @@ let s:cache_file = s:get_cache_file()
 try
   let g:cmake_target = s:cache_file[getcwd()].current_target
 catch /.*/
-  let g:cmake_target = ""
+  let g:cmake_target = ''
 endtry
 
 let g:cmake_export_compile_commands = 1
-let g:cmake_generator = "Ninja"
+let g:cmake_generator = 'Ninja'
 
 function! s:make_query_files()
   let l:build_dir = s:get_build_dir()
-  if !isdirectory(l:build_dir . "/.cmake/api/v1/query")
-    call mkdir(l:build_dir . "/.cmake/api/v1/query", "p")
+  if !isdirectory(l:build_dir . '/.cmake/api/v1/query')
+    call mkdir(l:build_dir . '/.cmake/api/v1/query', 'p')
   endif
-  if !filereadable(l:build_dir . "/.cmake/api/v1/query/codemodel-v2")
-    call writefile([" "], l:build_dir . "/.cmake/api/v1/query/codemodel-v2")
+  if !filereadable(l:build_dir . '/.cmake/api/v1/query/codemodel-v2')
+    call writefile([' '], l:build_dir . '/.cmake/api/v1/query/codemodel-v2')
   endif
 endfunction
 
 function! s:assure_query_reply()
   let l:build_dir = s:get_build_dir()
-  if !isdirectory(l:build_dir . "/.cmake/api/v1/reply")
+  if !isdirectory(l:build_dir . '/.cmake/api/v1/reply')
     call s:cmake_configure_and_generate()
   endif
 endfunction
@@ -147,17 +147,16 @@ function! s:get_cmake_argument_string()
   call s:make_query_files()
   let l:arguments = []
   let l:arguments += g:cmake_arguments
-  let l:arguments += ["-G " . g:cmake_generator]
-  let l:arguments += ["-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"]
-  let l:arguments += ["-DCMAKE_BUILD_TYPE=Debug"]
+  let l:arguments += ['-G ' . g:cmake_generator]
+  let l:arguments += ['-DCMAKE_EXPORT_COMPILE_COMMANDS=ON']
+  let l:arguments += ['-DCMAKE_BUILD_TYPE=Debug']
 
-  let l:argument_string = join(l:arguments, " ")
+  let l:argument_string = join(l:arguments, ' ')
   let l:command = l:argument_string . ' -B ' . s:get_build_dir() . ' -S ' . s:get_source_dir()
   return l:command
 endfunction
 
 function! s:cmdb_configure_and_generate()
-  "echo 'CMDB ' . s:get_cmake_argument_string()
   exec 'CMDB ' . s:get_cmake_argument_string()
 endfunction
 
@@ -186,7 +185,7 @@ endfunction
 function! s:cmake_compile_current_file()
   let l:current_path = s:get_path_to_current_buffer()
   let l:rel_path = s:get_build_relative_path(l:current_path)
-  let &makeprg = "ninja -C " .  s:get_build_dir() . ' ' . l:rel_path . '^'
+  let &makeprg = 'ninja -C ' .  s:get_build_dir() . ' ' . l:rel_path . '^'
   Make
   if !has('gui_running')
     redraw!
@@ -204,12 +203,12 @@ endfunction
 function! s:cmake_build_current_target()
   call g:Parse_codemodel_json()
   if len(g:cmake_target) == 0
-    echo "Please select a target and try again."
+    echo 'Please select a target and try again.'
     call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
     return
   endif
 
-  let l:tar = ""
+  let l:tar = ''
   if filereadable(g:cmake_target)
     let l:key = substitute(g:cmake_target, s:get_build_dir() . '/', '', 0)
     let l:tar = g:file_to_tar[l:key]
@@ -221,24 +220,24 @@ function! s:cmake_build_current_target()
 endfunction
 
 function! s:_build_target(target)
-  if g:vim_cmake_build_tool == 'vsplit'
+  if g:vim_cmake_build_tool ==? 'vsplit'
     let l:command = 'cmake --build ' . s:get_build_dir() . ' --target ' . a:target
     exe "vs | exe \"normal \<c-w>L\" | terminal " . l:command
-  elseif g:vim_cmake_build_tool == 'vim-dispatch'
+  elseif g:vim_cmake_build_tool ==? 'vim-dispatch'
     let cwd = getcwd()
     let &makeprg = 'ninja -C ' . cwd . '/' . s:get_build_dir() . ' ' . a:target
     Make
-  elseif g:vim_cmake_build_tool == 'Makeshift'
+  elseif g:vim_cmake_build_tool ==? 'Makeshift'
     let &makeprg = 'ninja ' . a:target
     let cwd = getcwd()
     let b:makeshift_root = cwd .'/' . s:get_build_dir()
     MakeshiftBuild
-  elseif g:vim_cmake_build_tool == 'make'
+  elseif g:vim_cmake_build_tool ==? 'make'
     let cwd = getcwd()
     let &makeprg = 'ninja -C ' . cwd . '/' . s:get_build_dir() . ' ' . a:target
     make
   else
-    echo "Your g:vim_cmake_build_tool value is invalid. Please set it to either vsplit, Makeshift, vim-dispatch or make."
+    echo 'Your g:vim_cmake_build_tool value is invalid. Please set it to either vsplit, Makeshift, vim-dispatch or make.'
   endif
 endfunction
 
@@ -273,8 +272,8 @@ function! s:cmake_build_non_artifacts()
   " echo l:res
 endfunction
 
-if !exists("g:vim_cmake_build_tool")
-  let g:vim_cmake_build_tool = "vsplit"
+if !exists('g:vim_cmake_build_tool')
+  let g:vim_cmake_build_tool = 'vsplit'
 endif
 
 function! s:cmake_clean()
@@ -283,31 +282,31 @@ function! s:cmake_clean()
 endfunction
 
 function! s:cmake_build_all()
-  if g:vim_cmake_build_tool == "vsplit"
+  if g:vim_cmake_build_tool ==? 'vsplit'
     " vsplit terminal implementation
     let l:command = 'cmake --build ' . s:get_build_dir()
     if g:cmake_target
       let l:command += ' --target ' . g:cmake_target
     endif
     exe "vs | exe \"normal \<c-w>L\" | terminal " . l:command
-  elseif g:vim_cmake_build_tool == "Makeshift"
+  elseif g:vim_cmake_build_tool ==? 'Makeshift'
     " Makeshift implementation
     let &makeprg = 'ninja'
     let cwd = getcwd()
     let b:makeshift_root = cwd . '/' . s:get_build_dir()
     MakeshiftBuild
-  elseif g:vim_cmake_build_tool == "vim-dispatch"
+  elseif g:vim_cmake_build_tool ==? 'vim-dispatch'
     " vim-dispatch implementation
     let cwd = getcwd()
     let &makeprg = 'ninja -C ' . cwd . '/' . s:get_build_dir()
     Make
-  elseif g:vim_cmake_build_tool == "make"
+  elseif g:vim_cmake_build_tool ==? 'make'
     " make implementation
     let cwd = getcwd()
     let &makeprg = 'ninja -C ' . cwd . '/' . s:get_build_dir()
     make
   else
-    echo "Your g:vim_cmake_build_tool value is invalid. Please set it to either vsplit, Makeshift, vim-dispatch or make."
+    echo 'Your g:vim_cmake_build_tool value is invalid. Please set it to either vsplit, Makeshift, vim-dispatch or make.'
   endif
 
 endfunction
@@ -315,8 +314,8 @@ endfunction
 function! s:update_cache_file()
   let cache = s:get_cache_file()
   let serial = s:encode_json(cache)
-  let split = split(serial, "\n")
-  call writefile(split, $HOME . "/.vim_cmake.json")
+  let split = split(serial, '\n')
+  call writefile(split, $HOME . '/.vim_cmake.json')
 endfunction
 
 function! s:cmake_pick_target()
@@ -338,7 +337,7 @@ endfunction
 
 function! s:cmake_run_current_target()
   if len(g:cmake_target) == 0
-    echo "Please select a target and try again."
+    echo 'Please select a target and try again.'
     call g:Parse_codemodel_json()
     call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
   else
@@ -353,10 +352,10 @@ function! s:update_target(target)
 
   let cache = s:get_cache_file()
   if !has_key(cache, getcwd())
-    let cache[getcwd()] = {"current_target": g:cmake_target, "targets":{}}
+    let cache[getcwd()] = {'current_target': g:cmake_target, 'targets':{}}
   else
     let dir = cache[getcwd()]
-    let dir["current_target"] = g:cmake_target
+    let dir['current_target'] = g:cmake_target
   endif
   call s:update_cache_file()
 endfunction
@@ -364,9 +363,9 @@ endfunction
 function! s:cmake_run_target_with_name(target)
   let s:cmake_target = s:get_build_dir() . '/' . g:tar_to_file[a:target]
   try
-    exec "!cmake --build " . s:get_build_dir() . ' --target ' . a:target
+    exec '!cmake --build ' . s:get_build_dir() . ' --target ' . a:target
   catch /.*/
-    echo "Failed to build " . a:target
+    echo 'Failed to build ' . a:target
   finally
     exe "vs | exe \"normal \<c-w>L\" | terminal " . s:cmake_target
   endtry
@@ -395,42 +394,42 @@ function! s:cmake_get_target_and_run_action(target_list, action)
 endfunction
 
 function! s:start_lldb(target)
-  let l:args = ""
+  let l:args = ''
   let l:data = s:get_cache_file()
   if has_key(l:data, getcwd())
-    let l:dir = l:data[getcwd()]["targets"]
-    if has_key(l:dir, s:get_build_dir() . "/" . a:target)
-      let l:target = l:dir[s:get_build_dir() . "/" . a:target]
-      if has_key(l:target, "args")
-        let l:args = l:target["args"]
+    let l:dir = l:data[getcwd()]['targets']
+    if has_key(l:dir, s:get_build_dir() . '/' . a:target)
+      let l:target = l:dir[s:get_build_dir() . '/' . a:target]
+      if has_key(l:target, 'args')
+        let l:args = l:target['args']
         echo l:args
       endif
-      if has_key(l:target, "breakpoints")
-        let l:breakpoints = l:target["breakpoints"]
+      if has_key(l:target, 'breakpoints')
+        let l:breakpoints = l:target['breakpoints']
         let l:commands = []
         for b in l:breakpoints
-          if b["enabled"]
-            let break = "b " . b["text"]
+          if b['enabled']
+            let break = 'b ' . b['text']
             call add(l:commands, break)
           endif
         endfor
-        call add(l:commands, "r")
-        let l:init_file = "/tmp/lldbinitvimcmake"
+        call add(l:commands, 'r')
+        let l:init_file = '/tmp/lldbinitvimcmake'
         let l:f = writefile(l:commands, l:init_file)
       endif
     endif
   endif
   try
-    exec "!cmake --build " . s:get_build_dir() . ' --target ' . a:target
+    exec '!cmake --build ' . s:get_build_dir() . ' --target ' . a:target
   catch /.*/
-    echo "Failed to build " . a:target
+    echo 'Failed to build ' . a:target
   finally
-    if exists("l:init_file")
-      let l:lldb_init_arg = " -s /tmp/lldbinitvimcmake "
+    if exists('l:init_file')
+      let l:lldb_init_arg = ' -s /tmp/lldbinitvimcmake '
     else
-      let l:lldb_init_arg = ""
+      let l:lldb_init_arg = ''
     endif
-    exec "GdbStartLLDB lldb " . s:get_build_dir() . "/" . a:target . l:lldb_init_arg . ' -- ' . l:args
+    exec 'GdbStartLLDB lldb ' . s:get_build_dir() . '/' . a:target . l:lldb_init_arg . ' -- ' . l:args
   endtry
 endfunction
 
@@ -450,10 +449,10 @@ endfunction
 
 
 function! g:Cmake_edit_breakpoints()
-  if !exists("g:vui_breakpoints")
+  if !exists('g:vui_breakpoints')
     let l:cache_file = s:get_cache_file()
     if has_key(l:cache_file, getcwd())
-      let g:vui_breakpoints = l:cache_file[getcwd()]["targets"]
+      let g:vui_breakpoints = l:cache_file[getcwd()]['targets']
     else
       let g:vui_breakpoints = {}
     endif
@@ -464,19 +463,19 @@ function! g:Cmake_edit_breakpoints()
   let screen.mode = g:vui_bp_mode
 
   function! screen.new_breakpoint()
-    let breakpoint = input("Breakpoint: ")
+    let breakpoint = input('Breakpoint: ')
 
     if len(breakpoint) == 0
       return
     endif
 
-    let bp = {"text": breakpoint, "enabled": 1}
+    let bp = {'text': breakpoint, 'enabled': 1}
 
     if !has_key(g:vui_breakpoints, g:cmake_target)
-      let g:vui_breakpoints[g:cmake_target] = {"breakpoints": []}
+      let g:vui_breakpoints[g:cmake_target] = {'breakpoints': []}
     endif
 
-    call add(g:vui_breakpoints[g:cmake_target]["breakpoints"], bp)
+    call add(g:vui_breakpoints[g:cmake_target]['breakpoints'], bp)
     call s:update_cache_file()
     return bp
   endfunction
@@ -486,25 +485,25 @@ function! g:Cmake_edit_breakpoints()
       return
     endif
 
-    let l:index = index(g:vui_breakpoints[g:cmake_target]["breakpoints"], self.get_focused_element().item)
+    let l:index = index(g:vui_breakpoints[g:cmake_target]['breakpoints'], self.get_focused_element().item)
 
     if l:index == -1
       return
     endif
 
     call s:update_cache_file()
-    call remove(g:vui_breakpoints[g:cmake_target]["breakpoints"], l:index)
+    call remove(g:vui_breakpoints[g:cmake_target]['breakpoints'], l:index)
   endfunction
 
   function! screen.visible_breakpoints()
     let visible = []
     if !has_key(g:vui_breakpoints, g:cmake_target)
-      let g:vui_breakpoints[g:cmake_target] = {"breakpoints": []}
+      let g:vui_breakpoints[g:cmake_target] = {'breakpoints': []}
     endif
 
-    for i in range(0, len(g:vui_breakpoints[g:cmake_target]["breakpoints"]) - 1)
-      let breakpoint = g:vui_breakpoints[g:cmake_target]["breakpoints"][i]
-      if breakpoint.enabled && self.mode == 'enabled'
+    for i in range(0, len(g:vui_breakpoints[g:cmake_target]['breakpoints']) - 1)
+      let breakpoint = g:vui_breakpoints[g:cmake_target]['breakpoints'][i]
+      if breakpoint.enabled && self.mode ==? 'enabled'
         continue
       endif
       call add(visible, breakpoint)
@@ -514,7 +513,7 @@ function! g:Cmake_edit_breakpoints()
   endfunction
 
   function! screen.toggle_mode()
-    let self.mode = self.mode == 'all' ? 'enabled' : 'all'
+    let self.mode = self.mode ==? 'all' ? 'enabled' : 'all'
     let g:vui_bp_mode = self.mode
   endfunction
 
@@ -541,7 +540,7 @@ function! g:Cmake_edit_breakpoints()
     let width = winwidth(0)
     let height = winheight(0)
 
-    let subtitle = g:vui_bp_mode == 'all' ? ' - ALL' : ' - ENABLED'
+    let subtitle = g:vui_bp_mode ==? 'all' ? ' - ALL' : ' - ENABLED'
 
     let main_panel = vui#component#panel#new('BREAKPOINTS' . subtitle, width, height)
     let content = main_panel.get_content_component()
@@ -562,7 +561,7 @@ function! g:Cmake_edit_breakpoints()
   endfunction
 
   function! screen.on_before_create_buffer(foo)
-    execute "40wincmd v"
+    execute '40wincmd v'
   endfunction
 
   call screen.map('a', 'new_breakpoint')
@@ -576,22 +575,22 @@ function! s:cmake_set_cmake_args(...)
 endfunction
 
 function! s:cmake_set_current_target_run_args(...)
-  if g:cmake_target == ""
+  if g:cmake_target ==? ''
     call s:cmake_target()
     return
   endif
-  let s = join(a:000, " ")
+  let s = join(a:000, ' ')
   let c = s:get_target_cache()
-  let c["args"] = s
+  let c['args'] = s
   call s:update_cache_file()
 endfunction
 
 function!  s:get_targets_cache()
   let c = s:get_cwd_cache()
-  if !has_key(c, "targets")
-    let c["targets"] = {}
+  if !has_key(c, 'targets')
+    let c['targets'] = {}
   endif
-  return c["targets"]
+  return c['targets']
 endfunction
 
 function! s:get_target_cache()
@@ -677,25 +676,25 @@ function! g:Cmake_edit_args()
       return
     endif
 
-    let l:index = index(g:vui_breakpoints[g:cmake_target]["breakpoints"], self.get_focused_element().item)
+    let l:index = index(g:vui_breakpoints[g:cmake_target]['breakpoints'], self.get_focused_element().item)
 
     if l:index == -1
       return
     endif
 
     call s:update_cache_file()
-    call remove(g:vui_breakpoints[g:cmake_target]["breakpoints"], l:index)
+    call remove(g:vui_breakpoints[g:cmake_target]['breakpoints'], l:index)
   endfunction
 
   function! screen.visible_breakpoints()
     let visible = []
     if !has_key(g:vui_breakpoints, g:cmake_target)
-      let g:vui_breakpoints[g:cmake_target] = {"breakpoints": []}
+      let g:vui_breakpoints[g:cmake_target] = {'breakpoints': []}
     endif
 
-    for i in range(0, len(g:vui_breakpoints[g:cmake_target]["breakpoints"]) - 1)
-      let breakpoint = g:vui_breakpoints[g:cmake_target]["breakpoints"][i]
-      if breakpoint.enabled && self.mode == 'enabled'
+    for i in range(0, len(g:vui_breakpoints[g:cmake_target]['breakpoints']) - 1)
+      let breakpoint = g:vui_breakpoints[g:cmake_target]['breakpoints'][i]
+      if breakpoint.enabled && self.mode ==? 'enabled'
         continue
       endif
       call add(visible, breakpoint)
@@ -705,7 +704,7 @@ function! g:Cmake_edit_args()
   endfunction
 
   function! screen.toggle_mode()
-    let self.mode = self.mode == 'all' ? 'enabled' : 'all'
+    let self.mode = self.mode ==? 'all' ? 'enabled' : 'all'
     let g:vui_bp_mode = self.mode
   endfunction
 
