@@ -206,16 +206,35 @@ function! s:cmake_build_current_target()
   if len(g:cmake_target) == 0
     echo "Please select a target and try again."
     call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
+    return
+  endif
+
+  let l:tar = ""
+  if filereadable(g:cmake_target)
+    let l:key = substitute(g:cmake_target, s:get_build_dir() . '/', '', 0)
+    let l:tar = g:file_to_tar[l:key]
   else
-    let l:tar = ""
-    if filereadable(g:cmake_target)
-      let l:key = substitute(g:cmake_target, s:get_build_dir() . '/', '', 0)
-      let l:tar = g:file_to_tar[l:key]
-    else
-      let l:tar = g:cmake_target
-    endif
+    let l:tar = g:cmake_target
+  endif
+
+  if g:vim_cmake_build_tool == 'vsplit'
     let l:command = 'cmake --build ' . s:get_build_dir() . ' --target ' . l:tar
-    exe "silent !" . l:command
+    exe "vs | exe \"normal \<c-w>L\" | terminal " . l:command
+  elseif g:vim_cmake_build_tool == 'vim-dispatch'
+    let cwd = getcwd()
+    let &makeprg = 'ninja -C ' . cwd . '/' . s:get_build_dir() . ' ' . l:tar
+    Make
+  elseif g:vim_cmake_build_tool == 'Makeshift'
+    let &makeprg = 'ninja ' . l:tar
+    let cwd = getcwd()
+    let b:makeshift_root = cwd .'/' . s:get_build_dir()
+    MakeshiftBuild
+  elseif g:vim_cmake_build_tool == 'make'
+    let cwd = getcwd()
+    let &makeprg = 'ninja -C ' . cwd . '/' . s:get_build_dir() . ' ' . l:tar
+    make
+  else
+    echo "Your g:vim_cmake_build_tool value is invalid. Please set it to either vsplit, Makeshift, vim-dispatch or make."
   endif
 endfunction
 
