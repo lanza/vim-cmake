@@ -745,4 +745,4 @@ command! -nargs=0 -complete=shellcmd CMakeBuildCurrentTarget call s:cmake_build_
 
 command! -nargs=0 -complete=shellcmd CMakeBreakpoints call g:Cmake_edit_breakpoints()
 
-command ! -nargs=0 -complete=shellcmd CMakeCompileCurrentFile call s:cmake_compile_current_file()
+command! -nargs=0 -complete=shellcmd CMakeCompileCurrentFile call s:cmake_compile_current_file()
