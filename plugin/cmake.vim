@@ -255,19 +255,38 @@ function! s:cmake_build_non_artifacts()
   " echo l:res
 endfunction
 
+if !exists("g:vim_cmake_build_tool")
+  let g:vim_cmake_build_tool = "vsplit"
+endif
+
 function! s:cmake_build_all()
-  let l:command = 'cmake --build ' . s:get_build_dir()
-
-  if g:cmake_target
-    let l:command += ' --target ' . g:cmake_target
+  if g:vim_cmake_build_tool == "vsplit"
+    " vsplit terminal implementation
+    let l:command = 'cmake --build ' . s:get_build_dir()
+    if g:cmake_target
+      let l:command += ' --target ' . g:cmake_target
+    endif
+    exe "vs | exe \"normal \<c-w>L\" | terminal " . l:command
+  elseif g:vim_cmake_build_tool == "Makeshift"
+    " Makeshift implementation
+    let &makeprg = 'ninja'
+    let cwd = getcwd()
+    let b:makeshift_root = cwd . '/' . s:get_build_dir()
+    MakeshiftBuild
+  elseif g:vim_cmake_build_tool == "vim-dispatch"
+    " vim-dispatch implementation
+    let cwd = getcwd()
+    let &makeprg = 'ninja -C ' . cwd . '/' . s:get_build_dir()
+    Make
+  elseif g:vim_cmake_build_tool == "make"
+    " make implementation
+    let cwd = getcwd()
+    let &makeprg = 'ninja -C ' . cwd . '/' . s:get_build_dir()
+    make
+  else
+    echo "Your g:vim_cmake_build_tool value is invalid. Please set it to either vsplit, Makeshift, vim-dispatch or make."
   endif
-  " let &makeprg = l:command
-  ". l:command
-  " silent let l:res = system(l:command)
 
-  " Make
-  "
-  exe "vs | exe \"normal \<c-w>L\" | terminal " . l:command
 endfunction
 
 function! s:update_cache_file()
