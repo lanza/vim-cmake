@@ -217,21 +217,25 @@ function! s:cmake_build_current_target()
     let l:tar = g:cmake_target
   endif
 
+  call s:_build_target(l:tar)
+endfunction
+
+function! s:_build_target(target)
   if g:vim_cmake_build_tool == 'vsplit'
-    let l:command = 'cmake --build ' . s:get_build_dir() . ' --target ' . l:tar
+    let l:command = 'cmake --build ' . s:get_build_dir() . ' --target ' . a:target
     exe "vs | exe \"normal \<c-w>L\" | terminal " . l:command
   elseif g:vim_cmake_build_tool == 'vim-dispatch'
     let cwd = getcwd()
-    let &makeprg = 'ninja -C ' . cwd . '/' . s:get_build_dir() . ' ' . l:tar
+    let &makeprg = 'ninja -C ' . cwd . '/' . s:get_build_dir() . ' ' . a:target
     Make
   elseif g:vim_cmake_build_tool == 'Makeshift'
-    let &makeprg = 'ninja ' . l:tar
+    let &makeprg = 'ninja ' . a:target
     let cwd = getcwd()
     let b:makeshift_root = cwd .'/' . s:get_build_dir()
     MakeshiftBuild
   elseif g:vim_cmake_build_tool == 'make'
     let cwd = getcwd()
-    let &makeprg = 'ninja -C ' . cwd . '/' . s:get_build_dir() . ' ' . l:tar
+    let &makeprg = 'ninja -C ' . cwd . '/' . s:get_build_dir() . ' ' . a:target
     make
   else
     echo "Your g:vim_cmake_build_tool value is invalid. Please set it to either vsplit, Makeshift, vim-dispatch or make."
@@ -250,10 +254,7 @@ function! s:cmake_pick_and_build_target()
   endfor
 
   set makeprg=ninja
-  call fzf#run({'source': l:names, 'sink': l:command , 'down': len(l:names) + 2})
-  ". l:command
-  " silent let l:res = system(l:command)
-  " echo l:res
+  call fzf#run({'source': l:names, 'sink': function('s:_build_target'), 'down': len(l:names) + 2})
 endfunction
 
 function! s:cmake_build_non_artifacts()
