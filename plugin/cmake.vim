@@ -95,7 +95,7 @@ function! g:Parse_codemodel_json()
     let l:jsonFile = target['jsonFile']
     let l:name = target['name']
     let l:file = readfile(g:cmake_query_response . l:jsonFile)
-    let l:json_string = join(l:file, '\n')
+    let l:json_string = join(l:file, "\n")
     let l:target_file_data = s:decode_json(l:json_string)
     if has_key(l:target_file_data, 'artifacts')
       let l:artifacts = l:target_file_data['artifacts']
