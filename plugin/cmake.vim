@@ -393,6 +393,22 @@ function! s:cmake_get_target_and_run_action(target_list, action)
   call fzf#run({'source': l:names, 'sink': function(a:action), 'down': len(l:names) + 2})
 endfunction
 
+function! s:start_gdb(target)
+  let l:args = ''
+  try
+    exec '!cmake --build ' . s:get_build_dir() . ' --target ' . a:target
+  catch /.*/
+    echo 'Failed to build ' . a:target
+  finally
+    if exists('l:init_file')
+      let l:gdb_init_arg = ' -s /tmp/gdbinitvimcmake '
+    else
+      let l:gdb_init_arg = ''
+    endif
+    exec 'GdbStart gdb ' . s:get_build_dir() . '/' . a:target . l:gdb_init_arg . ' -- ' . l:args
+  endtry
+endfunction
+
 function! s:start_lldb(target)
   let l:args = ''
   let l:data = s:get_cache_file()
@@ -444,7 +460,13 @@ function! s:cmake_debug()
     call add(l:names, l:name)
   endfor
 
-  call fzf#run({'source': l:names, 'sink': function('s:start_lldb'), 'down': len(l:names) + 2})
+  if exists('g:vim_cmake_debugger')
+    if g:vim_cmake_debugger ==? 'gdb'
+      call fzf#run({'source': l:names, 'sink': function('s:start_gdb'), 'down': len(l:names) + 2})
+    else
+      call fzf#run({'source': l:names, 'sink': function('s:start_lldb'), 'down': len(l:names) + 2})
+    endif
+  endif
 endfunction
 
 
