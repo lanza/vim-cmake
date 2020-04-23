@@ -209,7 +209,9 @@ function! s:cmake_build_current_target()
   endif
 
   let l:tar = ''
-  if filereadable(g:cmake_target)
+  " This needs to test if the g:cmake_target is a ninja target or an absolute
+  " path. I'm not sure why it can be both, I should fix that...
+  if g:cmake_target =~ s:get_build_dir()
     let l:key = substitute(g:cmake_target, s:get_build_dir() . '/', '', 0)
     let l:tar = g:file_to_tar[l:key]
   else
