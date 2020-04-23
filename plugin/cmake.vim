@@ -219,22 +219,36 @@ function! s:cmake_build_current_target()
   call s:_build_target(l:tar)
 endfunction
 
+func s:is_absolute_path(path)
+  let l:is_absolute = execute("lua print(vim.startswith('" . a:path . "', '/'))")
+  if l:is_absolute =~ "true"
+    return 1
+  else
+    return 0
+  endif
+endfunction
+
+
 function! s:_build_target(target)
+  if s:is_absolute_path(s:get_build_dir())
+    let l:directory = s:get_build_dir()
+  else
+    let l:cwd = getcwd()
+    let l:directory = cwd . '/' . s:get_build_dir()
+  endif
+
   if g:vim_cmake_build_tool ==? 'vsplit'
     let l:command = 'cmake --build ' . s:get_build_dir() . ' --target ' . a:target
     exe "vs | exe \"normal \<c-w>L\" | terminal " . l:command
   elseif g:vim_cmake_build_tool ==? 'vim-dispatch'
-    let cwd = getcwd()
-    let &makeprg = 'ninja -C ' . cwd . '/' . s:get_build_dir() . ' ' . a:target
+    let &makeprg = 'ninja -C ' . l:directory . ' ' . a:target
     Make
   elseif g:vim_cmake_build_tool ==? 'Makeshift'
     let &makeprg = 'ninja ' . a:target
-    let cwd = getcwd()
-    let b:makeshift_root = cwd .'/' . s:get_build_dir()
+    let b:makeshift_root = l:directory
     MakeshiftBuild
   elseif g:vim_cmake_build_tool ==? 'make'
-    let cwd = getcwd()
-    let &makeprg = 'ninja -C ' . cwd . '/' . s:get_build_dir() . ' ' . a:target
+    let &makeprg = 'ninja -C ' . l:directory . ' ' . a:target
     make
   else
     echo 'Your g:vim_cmake_build_tool value is invalid. Please set it to either vsplit, Makeshift, vim-dispatch or make.'
