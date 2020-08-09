@@ -1,7 +1,9 @@
 " cmake.vim - Vim plugin to create a CMake project system
 " Maintainer: Nathan Lanza <https://github.com/lanza>
 " Version:    0.1
-"
+
+let s:App = {}
+
 function! s:decode_json(string) abort
   if exists('*json_decode')
     return json_decode(a:string)
@@ -43,6 +45,7 @@ else
 endif
 
 let g:cmake_target = ''
+let g:current_target_args = ''
 let g:cmake_arguments = []
 
 function! s:get_cache_file()
@@ -337,6 +340,7 @@ endfunction
 function! s:cmake_pick_target()
   call g:Parse_codemodel_json()
   call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
+  call s:dump_current_target()
   return
   " if !g:Parse_codemodel_json()
   "   return
@@ -363,7 +367,6 @@ function! s:cmake_run_current_target()
 endfunction
 
 function! s:update_target(target)
-  echom a:target
   let g:cmake_target = s:get_build_dir() . '/' . g:tar_to_file[a:target]
 
   let cache = s:get_cache_file()
@@ -374,6 +377,10 @@ function! s:update_target(target)
     let dir['current_target'] = g:cmake_target
   endif
   call s:update_cache_file()
+endfunction
+
+function! s:dump_current_target()
+  echom "Current target set to '" . g:cmake_target . "' with args '" . g:current_target_args . "'"
 endfunction
 
 function! s:cmake_run_target_with_name(target)
@@ -432,10 +439,10 @@ function! s:start_lldb(target)
     let l:dir = l:data[getcwd()]['targets']
     if has_key(l:dir, s:get_build_dir() . '/' . a:target)
       let l:target = l:dir[s:get_build_dir() . '/' . a:target]
-      if has_key(l:target, 'args')
-        let l:args = l:target['args']
-        echo l:args
-      endif
+      " if has_key(l:target, 'args')
+      "   let l:args = l:target['args']
+      "   echo l:args
+      " endif
       if has_key(l:target, 'breakpoints')
         let l:breakpoints = l:target['breakpoints']
         let l:commands = []
@@ -461,7 +468,7 @@ function! s:start_lldb(target)
     else
       let l:lldb_init_arg = ''
     endif
-    exec 'GdbStartLLDB lldb ' . s:get_build_dir() . '/' . a:target . l:lldb_init_arg . ' -- ' . l:args
+    exec 'GdbStartLLDB lldb ' . a:target . l:lldb_init_arg . ' -- ' . g:current_target_args
   endtry
 endfunction
 
@@ -476,11 +483,21 @@ function! s:cmake_debug()
     call add(l:names, l:name)
   endfor
 
-  if exists('g:vim_cmake_debugger')
-    if g:vim_cmake_debugger ==? 'gdb'
-      call fzf#run({'source': l:names, 'sink': function('s:start_gdb'), 'down': len(l:names) + 2})
-    else
-      call fzf#run({'source': l:names, 'sink': function('s:start_lldb'), 'down': len(l:names) + 2})
+  if g:cmake_target == ''
+    if exists('g:vim_cmake_debugger')
+      if g:vim_cmake_debugger ==? 'gdb'
+        call fzf#run({'source': l:names, 'sink': function('s:start_gdb'), 'down': len(l:names) + 2})
+      else
+        call fzf#run({'source': l:names, 'sink': function('s:start_lldb'), 'down': len(l:names) + 2})
+      endif
+    endif
+  else
+    if exists('g:vim_cmake_debugger')
+      if g:vim_cmake_debugger ==? 'gdb'
+        call s:start_gdb(g:cmake_target)
+      else
+        call s:start_lldb(g:cmake_target)
+      endif
     endif
   endif
 endfunction
@@ -620,7 +637,9 @@ function! s:cmake_set_current_target_run_args(...)
   let s = join(a:000, ' ')
   let c = s:get_target_cache()
   let c['args'] = s
+  let g:current_target_args = s
   call s:update_cache_file()
+  call s:dump_current_target()
 endfunction
 
 function!  s:get_targets_cache()
