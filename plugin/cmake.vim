@@ -20,11 +20,11 @@ function! s:encode_json(object) abort
   if exists('*json_encode')
     return json_encode(a:object)
   endif
-  if type(a:object) == type('')
+  if type(a:object) == v:t_string
     return '"' . substitute(a:object, "[\001-\031\"\\\\]", '\=printf("\\u%04x", char2nr(submatch(0)))', 'g') . '"'
-  elseif type(a:object) == type([])
+  elseif type(a:object) == v:t_list
     return '['.join(map(copy(a:object), 's:encode_json(v:val)'),', ').']'
-  elseif type(a:object) == type({})
+  elseif type(a:object) == v:t_dict
     let pairs = []
     for key in keys(a:object)
       call add(pairs, s:encode_json(key) . ': ' . s:encode_json(a:object[key]))
