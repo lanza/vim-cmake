@@ -204,6 +204,10 @@ function! s:cmake_configure_and_generate()
 endfunction
 
 function! s:cmake_build_current_target()
+  call s:cmake_build_current_target_with_completion(v:null)
+endf
+
+function! s:cmake_build_current_target_with_completion(completion)
   call g:Parse_codemodel_json()
   if len(g:cmake_target) == 0
     echo 'Please select a target and try again.'
@@ -221,7 +225,7 @@ function! s:cmake_build_current_target()
     let l:tar = g:cmake_target
   endif
 
-  call s:_build_target(l:tar)
+  call s:_build_target_with_completion(l:tar, a:completion)
 endfunction
 
 func s:is_absolute_path(path)
@@ -233,8 +237,11 @@ func s:is_absolute_path(path)
   endif
 endfunction
 
-
 function! s:_build_target(target)
+  call s:_build_target_with_completion(a:target, v:null)
+endf
+
+function! s:_build_target_with_completion(target, completion)
   if s:is_absolute_path(s:get_build_dir())
     let l:directory = s:get_build_dir()
   else
@@ -255,6 +262,9 @@ function! s:_build_target(target)
   elseif g:vim_cmake_build_tool ==? 'make'
     let &makeprg = 'ninja -C ' . l:directory . ' ' . a:target
     make
+  elseif g:vim_cmake_build_tool ==? 'job'
+    let l:cmd = 'ninja -C ' . l:directory . ' ' . a:target
+    call jobstart(cmd, {"on_exit": a:completion })
   else
     echo 'Your g:vim_cmake_build_tool value is invalid. Please set it to either vsplit, Makeshift, vim-dispatch or make.'
   endif
@@ -355,14 +365,22 @@ function! s:cmake_pick_target()
   " call fzf#run({'source': l:names, 'sink': function('s:update_target'), 'down': len(l:names) + 2})
 endfunction
 
+function! s:_run_current_target(job_id, data, event)
+  if a:data == 0
+    exe "vs | exe \"normal \<c-w>L\" | terminal " . g:cmake_target
+  endif
+  let g:vim_cmake_build_tool = g:vim_cmake_build_tool_old
+endf
+
 function! s:cmake_run_current_target()
   if len(g:cmake_target) == 0
     echo 'Please select a target and try again.'
     call g:Parse_codemodel_json()
     call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
   else
-    call s:cmake_build_current_target()
-    exe "vs | exe \"normal \<c-w>L\" | terminal " . g:cmake_target
+    let g:vim_cmake_build_tool_old = g:vim_cmake_build_tool
+    let g:vim_cmake_build_tool = "job"
+    call s:cmake_build_current_target_with_completion(function("s:_run_current_target"))
   endif
 endfunction
 
@@ -502,129 +520,6 @@ function! s:cmake_debug()
   endif
 endfunction
 
-
-function! g:Cmake_edit_breakpoints()
-  if !exists('g:vui_breakpoints')
-    let l:cache_file = s:get_cache_file()
-    if has_key(l:cache_file, getcwd())
-      let g:vui_breakpoints = l:cache_file[getcwd()]['targets']
-    else
-      let g:vui_breakpoints = {}
-    endif
-    let g:vui_bp_mode = 'all'
-  endif
-
-  let screen = vui#screen#new()
-  let screen.mode = g:vui_bp_mode
-
-  function! screen.new_breakpoint()
-    let breakpoint = input('Breakpoint: ')
-
-    if len(breakpoint) == 0
-      return
-    endif
-
-    let bp = {'text': breakpoint, 'enabled': 1}
-
-    if !has_key(g:vui_breakpoints, g:cmake_target)
-      let g:vui_breakpoints[g:cmake_target] = {'breakpoints': []}
-    endif
-
-    call add(g:vui_breakpoints[g:cmake_target]['breakpoints'], bp)
-    call s:update_cache_file()
-    return bp
-  endfunction
-
-  function! screen.delete_breakpoint()
-    if !has_key(self.get_focused_element(), 'is_breakpoint')
-      return
-    endif
-
-    let l:index = index(g:vui_breakpoints[g:cmake_target]['breakpoints'], self.get_focused_element().item)
-
-    if l:index == -1
-      return
-    endif
-
-    call s:update_cache_file()
-    call remove(g:vui_breakpoints[g:cmake_target]['breakpoints'], l:index)
-  endfunction
-
-  function! screen.visible_breakpoints()
-    let visible = []
-    if !has_key(g:vui_breakpoints, g:cmake_target)
-      let g:vui_breakpoints[g:cmake_target] = {'breakpoints': []}
-    endif
-
-    for i in range(0, len(g:vui_breakpoints[g:cmake_target]['breakpoints']) - 1)
-      let breakpoint = g:vui_breakpoints[g:cmake_target]['breakpoints'][i]
-      if breakpoint.enabled && self.mode ==? 'enabled'
-        continue
-      endif
-      call add(visible, breakpoint)
-    endfor
-
-    return visible
-  endfunction
-
-  function! screen.toggle_mode()
-    let self.mode = self.mode ==? 'all' ? 'enabled' : 'all'
-    let g:vui_bp_mode = self.mode
-  endfunction
-
-  function! screen.render_breakpoints(container, breakpoints)
-    call a:container.clear_children()
-
-    for i in range(0, len(a:breakpoints) - 1)
-      let breakpoint = a:breakpoints[i]
-      let toggle = vui#component#toggle#new(breakpoint.text)
-      let toggle.is_breakpoint = 1
-      let toggle.item = breakpoint
-
-      call toggle.set_checked(toggle.item.enabled)
-      function! toggle.on_change(toggle)
-        let a:toggle.item.enabled = a:toggle.item.enabled ? 0 : 1
-        call s:update_cache_file()
-      endfunction
-
-      call a:container.add_child(toggle)
-    endfor
-  endfunction
-
-  function! screen.on_before_render(screen)
-    let width = winwidth(0)
-    let height = winheight(0)
-
-    let subtitle = g:vui_bp_mode ==? 'all' ? ' - ALL' : ' - ENABLED'
-
-    let main_panel = vui#component#panel#new('BREAKPOINTS' . subtitle, width, height)
-    let content = main_panel.get_content_component()
-    let container = vui#component#vcontainer#new()
-    let add_button = vui#component#button#new('[Add Breakpoint]')
-
-    let breakpoints = self.visible_breakpoints()
-    call add_button.set_y(len(breakpoints) == 0 ? 0 : len(breakpoints) + 1)
-
-    function! add_button.on_action(button)
-      call b:screen.new_breakpoint()
-    endfunction
-
-    call content.add_child(container)
-    call content.add_child(add_button)
-    call a:screen.render_breakpoints(container, breakpoints)
-    call a:screen.set_root_component(main_panel)
-  endfunction
-
-  function! screen.on_before_create_buffer(foo)
-    execute '40wincmd v'
-  endfunction
-
-  call screen.map('a', 'new_breakpoint')
-  call screen.map('m', 'toggle_mode')
-  call screen.map('dd', 'delete_breakpoint')
-  call screen.show()
-endfunction
-
 function! s:cmake_set_cmake_args(...)
   let g:cmake_arguments = a:000
 endfunction
@@ -696,127 +591,6 @@ function! s:get_build_dir()
   return c['build_dir']
 endfunction
 
-function! g:Cmake_edit_args()
-  if !exists('g:vui_args')
-    let l:cache_file = s:get_cache_file()
-    if has_key(l:cache_file, getcwd())
-      let g:vui_breakpoints = s:get_cwd_cache()['targets']
-    else
-      let g:vui_breakpoints = {}
-    endif
-    let g:vui_bp_mode = 'all'
-  endif
-
-  let screen = vui#screen#new()
-  let screen.mode = g:vui_bp_mode
-
-  function! screen.new_breakpoint()
-    let breakpoint = input('Breakpoint: ')
-
-    if len(breakpoint) == 0
-      return
-    endif
-
-    let bp = {'text': breakpoint, 'enabled': 1}
-
-    if !has_key(g:vui_breakpoints, g:cmake_target)
-      let g:vui_breakpoints[g:cmake_target] = {'breakpoints': []}
-    endif
-
-    call add(g:vui_breakpoints[g:cmake_target]['breakpoints'], bp)
-    call s:update_cache_file()
-    return bp
-  endfunction
-
-  function! screen.delete_breakpoint()
-    if !has_key(self.get_focused_element(), 'is_breakpoint')
-      return
-    endif
-
-    let l:index = index(g:vui_breakpoints[g:cmake_target]['breakpoints'], self.get_focused_element().item)
-
-    if l:index == -1
-      return
-    endif
-
-    call s:update_cache_file()
-    call remove(g:vui_breakpoints[g:cmake_target]['breakpoints'], l:index)
-  endfunction
-
-  function! screen.visible_breakpoints()
-    let visible = []
-    if !has_key(g:vui_breakpoints, g:cmake_target)
-      let g:vui_breakpoints[g:cmake_target] = {'breakpoints': []}
-    endif
-
-    for i in range(0, len(g:vui_breakpoints[g:cmake_target]['breakpoints']) - 1)
-      let breakpoint = g:vui_breakpoints[g:cmake_target]['breakpoints'][i]
-      if breakpoint.enabled && self.mode ==? 'enabled'
-        continue
-      endif
-      call add(visible, breakpoint)
-    endfor
-
-    return visible
-  endfunction
-
-  function! screen.toggle_mode()
-    let self.mode = self.mode ==? 'all' ? 'enabled' : 'all'
-    let g:vui_bp_mode = self.mode
-  endfunction
-
-  function! screen.render_breakpoints(container, breakpoints)
-    call a:container.clear_children()
-
-    for i in range(0, len(a:breakpoints) - 1)
-      let breakpoint = a:breakpoints[i]
-      let toggle = vui#component#toggle#new(breakpoint.text)
-      let toggle.is_breakpoint = 1
-      let toggle.item = breakpoint
-
-      call toggle.set_checked(toggle.item.enabled)
-      function! toggle.on_change(toggle)
-        let a:toggle.item.enabled = a:toggle.item.enabled ? 0 : 1
-        call s:update_cache_file()
-      endfunction
-
-      call a:container.add_child(toggle)
-    endfor
-  endfunction
-
-  function! screen.on_before_render(screen)
-    let width = winwidth(0)
-    let height = winheight(0)
-
-    let subtitle = g:vui_bp_mode ==? 'all' ? ' - ALL' : ' - ENABLED'
-
-    let main_panel = vui#component#panel#new('BREAKPOINTS' . subtitle, width, height)
-    let content = main_panel.get_content_component()
-    let container = vui#component#vcontainer#new()
-    let add_button = vui#component#button#new('[Add Breakpoint]')
-
-    let breakpoints = self.visible_breakpoints()
-    call add_button.set_y(len(breakpoints) == 0 ? 0 : len(breakpoints) + 1)
-
-    function! add_button.on_action(button)
-      call b:screen.new_breakpoint()
-    endfunction
-
-    call content.add_child(container)
-    call content.add_child(add_button)
-    call a:screen.render_breakpoints(container, breakpoints)
-    call a:screen.set_root_component(main_panel)
-  endfunction
-
-  function! screen.on_before_create_buffer(foo)
-    execute '40wincmd v'
-  endfunction
-
-  call screen.map('a', 'new_breakpoint')
-  call screen.map('m', 'toggle_mode')
-  call screen.map('dd', 'delete_breakpoint')
-  call screen.show()
-endfunction
 
 command! -nargs=* -complete=shellcmd CMakeSetCMakeArgs call s:cmake_set_cmake_args(<f-args>)
 command! -nargs=1 -complete=shellcmd CMakeSetBuildDir call s:cmake_set_build_dir(<f-args>)
@@ -825,19 +599,16 @@ command! -nargs=1 -complete=shellcmd CMakeSetSourceDir call s:cmake_set_source_d
 command! -nargs=0 -complete=shellcmd CMakeConfigureAndGenerate call s:cmake_configure_and_generate()
 command! -nargs=0 -complete=shellcmd CMDBConfigureAndGenerate call s:cmdb_configure_and_generate()
 
-command! -nargs=* -complete=shellcmd CMakeSetCurrentTargetRunArgs call s:cmake_set_current_target_run_args(<f-args>)
 command! -nargs=0 -complete=shellcmd CMakeCompileCurrentFile call s:cmake_compile_current_file()
 command! -nargs=0 -complete=shellcmd CMakeDebugWithNvimLLDB call s:cmake_debug()
 
 command! -nargs=0 -complete=shellcmd CMakePickTarget call s:cmake_pick_target()
-
-command! -nargs=0 -complete=shellcmd CMakePickAndRunTarget call s:cmake_pick_and_run_target()
 command! -nargs=0 -complete=shellcmd CMakeRunCurrentTarget call s:cmake_run_current_target()
+command! -nargs=* -complete=shellcmd CMakeSetCurrentTargetRunArgs call s:cmake_set_current_target_run_args(<f-args>)
+command! -nargs=0 -complete=shellcmd CMakeBuildCurrentTarget call s:cmake_build_current_target()
 
 command! -nargs=0 -complete=shellcmd CMakeClean call s:cmake_clean()
 command! -nargs=0 -complete=shellcmd CMakeBuildAll call s:cmake_build_all()
-command! -nargs=0 -complete=shellcmd CMakePickAndBuildTarget call s:cmake_pick_and_build_target()
-command! -nargs=0 -complete=shellcmd CMakeBuildCurrentTarget call s:cmake_build_current_target()
 
 " I don't remember the purpose of this -- kill for now
 "command! -nargs=0 -complete=shellcmd CMakeBuildNonArtifacts call s:cmake_build_non_artifacts()
