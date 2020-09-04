@@ -611,9 +611,4 @@ command! -nargs=0 -complete=shellcmd CMakeBuildCurrentTarget call s:cmake_build_
 command! -nargs=0 -complete=shellcmd CMakeClean call s:cmake_clean()
 command! -nargs=0 -complete=shellcmd CMakeBuildAll call s:cmake_build_all()
 
-" I don't remember the purpose of this -- kill for now
-"command! -nargs=0 -complete=shellcmd CMakeBuildNonArtifacts call s:cmake_build_non_artifacts()
-
-command! -nargs=0 -complete=shellcmd CMakeBreakpoints call g:Cmake_edit_breakpoints()
-
 command! -nargs=0 -complete=shellcmd CMakeCompileCurrentFile call s:cmake_compile_current_file()
