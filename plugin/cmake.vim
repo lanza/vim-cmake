@@ -201,6 +201,7 @@ endfunction
 function! s:cmake_configure_and_generate()
   let l:command = 'cmake ' . s:get_cmake_argument_string()
   exe "vs | exe \"normal \<c-w>L\" | terminal " . l:command
+  exe 'silent !test -L compile_commands.json || test -e compile_commands.json || ln -s ' . s:get_build_dir() . '/compile_commands.json .'
 endfunction
 
 function! s:cmake_build_current_target()
