@@ -554,6 +554,26 @@ function! s:get_target_cache()
   return c[g:cmake_target]
 endfunction
 
+function! s:cmake_create_file(...)
+  if len(a:000) > 2 || len(a:000) == 0
+    echo 'CMakeCreateFile requires 1 or 2 arguments: e.g. Directory File for `Directory/File.{cpp,h}`'
+    return
+  endif
+
+  if len(a:000) == 2
+    let l:header = "include/" . a:1 . "/" . a:2 . ".h"
+    let l:source = "lib/" . a:1 . "/" . a:2 . ".cpp"
+    silent exec "!touch " . l:header
+    silent exec "!touch " . l:source
+  elseif len(a:000) == 1
+    let l:header = "include/" . a:1 . ".h"
+    let l:source = "lib/" . a:1 . ".cpp"
+    silent exec "!touch " . l:header
+    silent exec "!touch " . l:source
+  end
+
+endfunction
+
 function! s:cmake_set_build_dir(...)
   let dir = a:1
   let c = s:get_cwd_cache()
@@ -612,3 +632,6 @@ command! -nargs=0 -complete=shellcmd CMakeClean call s:cmake_clean()
 command! -nargs=0 -complete=shellcmd CMakeBuildAll call s:cmake_build_all()
 
 command! -nargs=0 -complete=shellcmd CMakeCompileCurrentFile call s:cmake_compile_current_file()
+
+command! -nargs=* -complete=shellcmd CMakeCreateFile call s:cmake_create_file(<f-args>)
+
