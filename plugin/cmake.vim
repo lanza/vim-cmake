@@ -368,7 +368,7 @@ endfunction
 
 function! s:_run_current_target(job_id, data, event)
   if a:data == 0
-    exe "vs | exe \"normal \<c-w>L\" | terminal " . g:cmake_target
+    exe "vs | exe \"normal \<c-w>L\" | terminal " . g:cmake_target . " " . g:current_target_args
   endif
   let g:vim_cmake_build_tool = g:vim_cmake_build_tool_old
 endf
