@@ -607,7 +607,11 @@ endfunction
 function! s:get_build_dir()
   let c = s:get_cwd_cache()
   if !has_key(c, 'build_dir')
-    let c['build_dir'] = 'build/Debug'
+    if exists("g:cmake_default_build_dir")
+      let c['build_dir'] = g:cmake_default_build_dir
+    else
+      let c['build_dir'] = 'build/Debug'
+    endif
   endif
   return c['build_dir']
 endfunction
