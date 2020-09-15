@@ -152,7 +152,17 @@ function! s:get_cmake_argument_string()
   let l:arguments += g:cmake_arguments
   let l:arguments += ['-G ' . g:cmake_generator]
   let l:arguments += ['-DCMAKE_EXPORT_COMPILE_COMMANDS=ON']
-  let l:arguments += ['-DCMAKE_BUILD_TYPE=Debug']
+
+  let found_cmake_build_type = v:false
+  for arg in g:cmake_arguments
+    if (arg =~ "CMAKE_BUILD_TYPE")
+      let found_cmake_build_type = v:true
+    endif
+  endfor
+
+  if !found_cmake_build_type
+    let l:arguments += ['-DCMAKE_BUILD_TYPE=Debug']
+  endif
 
   let l:argument_string = join(l:arguments, ' ')
   let l:command = l:argument_string . ' -B ' . s:get_build_dir() . ' -S ' . s:get_source_dir()
