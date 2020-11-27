@@ -488,7 +488,14 @@ function! s:start_lldb(target)
     endif
   endif
   try
-    exec '!cmake --build ' . s:get_build_dir() . ' --target ' . a:target
+    if g:cmake_target =~ s:get_build_dir()
+      let l:key = substitute(g:cmake_target, s:get_build_dir() . '/', '', 0)
+      let l:tar = g:file_to_tar[l:key]
+    else
+      let l:tar = g:cmake_target
+    endif
+    " call s:_build_target_with_completion(l:tar, function("s:_run_debugger"))
+    exec '!cmake --build ' . s:get_build_dir() . ' --target ' . l:tar
   catch /.*/
     echo 'Failed to build ' . a:target
   finally
