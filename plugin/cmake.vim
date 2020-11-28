@@ -649,6 +649,14 @@ function! s:get_source_dir()
   return c['source_dir']
 endfunction
 
+function g:GetCMakeSourceDir()
+  return s:get_source_dir()
+endfunction
+
+function g:GetCMakeBuildDir()
+  return s:get_build_dir()
+endfunction
+
 function! s:get_build_dir()
   let c = s:get_cwd_cache()
   if !has_key(c, 'build_dir')
