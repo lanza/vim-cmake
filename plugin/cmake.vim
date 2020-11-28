@@ -559,6 +559,10 @@ function! s:cmake_set_cmake_args(...)
   let c['cmake_args'] = a:000
 endfunction
 
+function! g:GetCMakeArgs()
+  return get(s:get_cwd_cache(), "cmake_args", [])
+endfunction
+
 function! s:cmake_set_current_target_run_args(...)
   if g:cmake_target ==? ''
     call s:cmake_target()
