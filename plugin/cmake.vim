@@ -555,6 +555,8 @@ endfunction
 
 function! s:cmake_set_cmake_args(...)
   let g:cmake_arguments = a:000
+  let c = s:get_cwd_cache()
+  let c['cmake_args'] = a:000
 endfunction
 
 function! s:cmake_set_current_target_run_args(...)
