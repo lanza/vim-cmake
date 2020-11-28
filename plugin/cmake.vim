@@ -576,6 +576,11 @@ function! s:cmake_set_current_target_run_args(...)
   call s:dump_current_target()
 endfunction
 
+function! g:GetCMakeCurrentTargetRunArgs()
+  let c = s:get_target_cache()
+  return get(c, 'args', "")
+endfunction
+
 function!  s:get_targets_cache()
   let c = s:get_cwd_cache()
   if !has_key(c, 'targets')
