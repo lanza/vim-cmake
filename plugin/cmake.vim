@@ -153,10 +153,18 @@ function! s:get_cmake_argument_string()
   let l:arguments += ['-G ' . g:cmake_generator]
   let l:arguments += ['-DCMAKE_EXPORT_COMPILE_COMMANDS=ON']
 
+  let found_source_dir_arg = v:false
+  let found_build_dir_arg = v:false
   let found_cmake_build_type = v:false
   for arg in g:cmake_arguments
     if (arg =~ "CMAKE_BUILD_TYPE")
       let found_cmake_build_type = v:true
+    elseif (arg =~ "-S")
+      let found_source_dir_arg = v:true
+    elseif (arg =~ "-B")
+      let found_build_dir_arg = v:true
+    elseif (isdirectory(arg) && filereadable(arg . "/CMakeLists.txt"))
+      let found_source_dir_arg = v:true
     endif
   endfor
 
@@ -164,8 +172,15 @@ function! s:get_cmake_argument_string()
     let l:arguments += ['-DCMAKE_BUILD_TYPE=Debug']
   endif
 
-  let l:argument_string = join(l:arguments, ' ')
-  let l:command = l:argument_string . ' -B ' . s:get_build_dir() . ' -S ' . s:get_source_dir()
+  if !found_build_dir_arg
+    let l:arguments += ['-B', s:get_build_dir()]
+  endif
+
+  if !found_source_dir_arg
+    let l:arguments += ['-S', s:get_source_dir()]
+  endif
+
+  let l:command = join(l:arguments, ' ')
   return l:command
 endfunction
 
