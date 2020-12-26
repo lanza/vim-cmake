@@ -1,6 +1,7 @@
 " if exists('g:cv#vim_cmake')
 "   finish
 " endif
+finish
 let g:cv#vim_cmake = {}
 
 source autoload/cv/TypeInfo.vim
