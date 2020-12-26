@@ -1,6 +1,7 @@
 import json
 from pprint import pprint
 from dataclasses import dataclass
+from typing import List
 
 file = open("/Users/lanza/Dummy/ximple/build/.cmake/api/v1/reply/codemodel-v2-0a1d77333f3f3e852d8e.json", 'r')
 j = json.load(file)
@@ -12,14 +13,14 @@ targets_dict = first_config["targets"]
 @dataclass
 class Target:
     name: str
-    artifacts: [str]
-    sources: [str]
+    artifacts: List[str]
+    sources: List[str]
     type: str
 
-targets: [Target] = []
+targets: List[Target] = []
 
 
-def get_targets(codemodel):
+def get_targets():
     for target in targets_dict:
         name = None
         artifacts = []
