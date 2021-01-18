@@ -264,6 +264,34 @@ function g:CMake_configure_and_generate()
   call s:cmake_configure_and_generate()
 endfunction
 
+function! s:check_if_window_is_alive(win)
+  if index(nvim_list_wins(), a:win) > -1
+    return v:true
+  else
+    return v:false
+  endif
+endf
+
+function! s:check_if_buffer_is_alive(buf)
+  echo a:buf
+  if index(nvim_list_bufs(), a:buf) > -1
+    return v:true
+  else
+    return v:false
+  endif
+endf
+
+" close the current window and open a new one
+" This is a hack for now because I don't feel like figuring out how to clean a
+" dirty buffer and termopen refuses to open in a dirty buffer
+function! s:get_only_window()
+  call s:close_last_window_if_open()
+  call s:close_last_buffer_if_open()
+  exe "vs | wincmd L | enew"
+  let g:cmake_last_window = nvim_get_current_win()
+  let g:cmake_last_buffer = nvim_get_current_buf()
+endf
+
 function! s:cmake_configure_and_generate()
   let l:command = 'cmake ' . s:get_cmake_argument_string()
   exe "vs | exe \"wincmd L\" | terminal " . 'echo ' . l:command . ' && ' . l:command
@@ -272,7 +300,7 @@ endfunction
 
 function! s:cmake_configure_and_generate_with_completion(completion)
   let l:command = g:cmake_tool . " " . s:get_cmake_argument_string()
-  exe "vs | exe \"wincmd L\" | enew"
+  call s:get_only_window()
   echo l:command
   call termopen(split(l:command), {'on_exit': a:completion})
   exe 'silent !test -L compile_commands.json || test -e compile_commands.json || ln -s ' . s:get_build_dir() . '/compile_commands.json .'
@@ -329,6 +357,7 @@ function! s:_build_target(target)
 endf
 
 let g:cmake_last_window = v:null
+let g:cmake_last_buffer = v:null
 
 function! s:_build_target_with_completion(target, completion)
   if s:is_absolute_path(s:get_build_dir())
@@ -339,11 +368,8 @@ function! s:_build_target_with_completion(target, completion)
   endif
 
   if g:vim_cmake_build_tool ==? 'vsplit'
-    echom "Here"
-    echom a:completion
     let l:command = 'cmake --build ' . s:get_build_dir() . ' --target ' . a:target
-    exe "vs | wincmd L | enew"
-    let g:cmake_last_window = nvim_get_current_win()
+    call s:get_only_window()
     call termopen(l:command, { "on_exit": a:completion })
   elseif g:vim_cmake_build_tool ==? 'vim-dispatch'
     let &makeprg = 'ninja -C ' . l:directory . ' ' . a:target
@@ -458,10 +484,23 @@ function! s:_do_cmake_pick_target()
   call s:dump_current_target()
 endfunction
 
+function! s:close_last_window_if_open()
+  if s:check_if_window_is_alive(g:cmake_last_window)
+    call nvim_win_close(g:cmake_last_window, v:true)
+  endif
+endf
+
+function! s:close_last_buffer_if_open()
+  if s:check_if_buffer_is_alive(g:cmake_last_buffer)
+    call nvim_buf_delete(g:cmake_last_buffer, {"force": v:true})
+  endif
+endf
+
 function! s:_run_current_target(job_id, exit_code, event)
-  call nvim_win_close(g:cmake_last_window, v:true)
+  call s:close_last_window_if_open()
   if a:exit_code == 0
-    exe "vs | exe \"normal \<c-w>L\" | terminal " . g:cmake_target . " " . g:current_target_args
+    call s:get_only_window()
+    exe "terminal " . g:cmake_target . " " . g:current_target_args
   endif
   let g:vim_cmake_build_tool = g:vim_cmake_build_tool_old
 endf
@@ -513,7 +552,8 @@ function! s:cmake_run_target_with_name(target)
   catch /.*/
     echo 'Failed to build ' . a:target
   finally
-    exe "vs | exe \"normal \<c-w>L\" | terminal " . s:cmake_target
+    call s:get_only_window()
+    exe "terminal " . s:cmake_target
   endtry
 endfunction
 
@@ -578,16 +618,14 @@ function! s:start_lldb(job_id, exit_code, event)
   let l:init_file = '/tmp/lldbinitvimcmake'
   let l:f = writefile(l:commands, l:init_file)
 
-  if g:cmake_last_window != v:null
-    call nvim_win_close(g:cmake_last_window, v:true)
-  endif
+  call s:close_last_window_if_open()
+  call s:close_last_buffer_if_open()
 
   if exists('l:init_file')
     let l:lldb_init_arg = ' -s /tmp/lldbinitvimcmake '
   else
     let l:lldb_init_arg = ''
   endif
-  setlocal signcolumn=yes
   exec 'GdbStartLLDB lldb ' . g:cmake_target . l:lldb_init_arg . ' -- ' . g:current_target_args
 endfunction
 
