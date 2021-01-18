@@ -293,9 +293,7 @@ function! s:get_only_window()
 endf
 
 function! s:cmake_configure_and_generate()
-  let l:command = 'cmake ' . s:get_cmake_argument_string()
-  exe "vs | exe \"wincmd L\" | terminal " . 'echo ' . l:command . ' && ' . l:command
-  exe 'silent !test -L compile_commands.json || test -e compile_commands.json || ln -s ' . s:get_build_dir() . '/compile_commands.json .'
+  call s:cmake_configure_and_generate_with_completion(s:noop)
 endfunction
 
 function! s:cmake_configure_and_generate_with_completion(completion)
