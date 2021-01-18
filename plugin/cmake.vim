@@ -459,10 +459,10 @@ function! s:_do_cmake_pick_target()
 endfunction
 
 function! s:_run_current_target(job_id, exit_code, event)
+  call nvim_win_close(g:cmake_last_window, v:true)
   if a:exit_code == 0
     exe "vs | exe \"normal \<c-w>L\" | terminal " . g:cmake_target . " " . g:current_target_args
   endif
-  echo "3"
   let g:vim_cmake_build_tool = g:vim_cmake_build_tool_old
 endf
 
