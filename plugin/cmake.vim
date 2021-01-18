@@ -152,6 +152,7 @@ function! s:parse_codemodel_json_with_completion(completion)
 endfunction
 
 let s:cache_file = s:get_cache_file()
+let g:cmake_cache_file = s:cache_file
 
 " this shouldn't be here...
 try
@@ -162,6 +163,11 @@ catch /.*/
   let g:cmake_target = v:null
   let g:cmake_target_relative = v:null
   let g:cmake_target_name = v:null
+endtry
+try
+  let g:current_target_args = s:cache_file[getcwd()]["targets"][g:cmake_target].args
+catch /.*/
+  let g:current_target_args = ''
 endtry
 
 let g:cmake_export_compile_commands = 1
