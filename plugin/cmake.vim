@@ -44,7 +44,11 @@ else
   let g:loaded_vim_cmake = 1
 endif
 
-let g:cmake_target = ''
+let g:cmake_tool = 'cmake'
+let g:cmake_window_id = -1
+let g:cmake_target = v:null
+let g:cmake_target_relative = v:null
+let g:cmake_target_name = v:null
 let g:current_target_args = ''
 let g:cmake_arguments = []
 
@@ -64,13 +68,10 @@ function! s:get_cache_file()
   return g:cmake_cache_file
 endfunction
 
-function! g:Parse_codemodel_json()
+
+" this needs to be wrapped due to the need to use on_exit to pipeline the config
+function! s:_do_parse_codemodel_json()
   let l:build_dir = s:get_build_dir()
-  if !isdirectory(l:build_dir . '/.cmake/api/v1/reply')
-    echom 'Must configure and generate first'
-    call s:assure_query_reply()
-    return 0
-  endif
   let g:cmake_query_response = l:build_dir . '/.cmake/api/v1/reply/'
   let l:codemodel_file = globpath(g:cmake_query_response, 'codemodel*')
   let l:codemodel_contents = readfile(l:codemodel_file)
@@ -117,13 +118,50 @@ function! g:Parse_codemodel_json()
     endif
   endfor
   return 1
+endf
+
+function! g:Parse_codemodel_json()
+  let l:build_dir = s:get_build_dir()
+  if !isdirectory(l:build_dir . '/.cmake/api/v1/reply')
+    echom 'Must configure and generate first'
+    call s:assure_query_reply_with_completion(function('s:_do_parse_codemodel_json'))
+  endif
+  return s:_do_parse_codemodel_json()
+endfunction
+
+function! s:do_all_completions(...)
+  for Completion in a:000
+    if type(Completion) == v:t_func
+      call Completion()
+    endif
+  endfor
+endfunction
+
+function! s:compose_completions(outer, inner)
+  call a:outer(a:inner)
+endfunction
+
+function! s:parse_codemodel_json_with_completion(completion)
+  let l:build_dir = s:get_build_dir()
+  if !isdirectory(l:build_dir . '/.cmake/api/v1/reply')
+    call s:assure_query_reply_with_completion(function('s:do_all_completions', [function('s:_do_parse_codemodel_json'), a:completion]))
+  else
+    call s:_do_parse_codemodel_json()
+    call a:completion()
+  endif
 endfunction
 
 let s:cache_file = s:get_cache_file()
+
+" this shouldn't be here...
 try
   let g:cmake_target = s:cache_file[getcwd()].current_target
+  let g:cmake_target_relative = s:cache_file[getcwd()].current_target_relative
+  let g:cmake_target_name = s:cache_file[getcwd()].current_target_name
 catch /.*/
-  let g:cmake_target = ''
+  let g:cmake_target = v:null
+  let g:cmake_target_relative = v:null
+  let g:cmake_target_name = v:null
 endtry
 
 let g:cmake_export_compile_commands = 1
@@ -139,10 +177,12 @@ function! s:make_query_files()
   endif
 endfunction
 
-function! s:assure_query_reply()
+function! s:assure_query_reply_with_completion(completion)
   let l:build_dir = s:get_build_dir()
   if !isdirectory(l:build_dir . '/.cmake/api/v1/reply')
-    call s:cmake_configure_and_generate()
+    call s:cmake_configure_and_generate_with_completion(a:completion)
+  else
+    call a:completion()
   endif
 endfunction
 
@@ -223,20 +263,37 @@ endfunction
 function g:CMake_configure_and_generate()
   call s:cmake_configure_and_generate()
 endfunction
+
 function! s:cmake_configure_and_generate()
   let l:command = 'cmake ' . s:get_cmake_argument_string()
-  exe "vs | exe \"normal \<c-w>L\" | terminal " . 'echo ' . l:command . ' && ' . l:command
+  exe "vs | exe \"wincmd L\" | terminal " . 'echo ' . l:command . ' && ' . l:command
   exe 'silent !test -L compile_commands.json || test -e compile_commands.json || ln -s ' . s:get_build_dir() . '/compile_commands.json .'
 endfunction
 
-function! s:cmake_build_current_target()
-  call s:cmake_build_current_target_with_completion(v:null)
+function! s:cmake_configure_and_generate_with_completion(completion)
+  let l:command = g:cmake_tool . " " . s:get_cmake_argument_string()
+  exe "vs | exe \"wincmd L\" | enew"
+  echo l:command
+  call termopen(split(l:command), {'on_exit': a:completion})
+  exe 'silent !test -L compile_commands.json || test -e compile_commands.json || ln -s ' . s:get_build_dir() . '/compile_commands.json .'
 endf
 
-function! s:cmake_build_current_target_with_completion(completion)
-  call g:Parse_codemodel_json()
-  if len(g:cmake_target) == 0
-    echo 'Please select a target and try again.'
+function! s:cmake_build_current_target()
+  call s:cmake_build_current_target_with_completion(s:noop)
+endf
+
+function! s:_do_build_current_target()
+  call s:_do_build_current_target_with_completion(s:noop)
+endfunction
+
+function! s:noop_function(...)
+endfunction
+
+let s:noop = function('s:noop_function')
+
+function! s:_do_build_current_target_with_completion(completion)
+  if g:cmake_target == v:null
+    echom "Please select a target first"
     call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
     return
   endif
@@ -252,6 +309,10 @@ function! s:cmake_build_current_target_with_completion(completion)
   endif
 
   call s:_build_target_with_completion(l:tar, a:completion)
+endfunction
+
+function! s:cmake_build_current_target_with_completion(completion)
+  call s:parse_codemodel_json_with_completion(function('s:compose_completions', [function('s:_do_build_current_target_with_completion'), a:completion]))
 endfunction
 
 func s:is_absolute_path(path)
@@ -276,8 +337,11 @@ function! s:_build_target_with_completion(target, completion)
   endif
 
   if g:vim_cmake_build_tool ==? 'vsplit'
+    echom "Here"
+    echom a:completion
     let l:command = 'cmake --build ' . s:get_build_dir() . ' --target ' . a:target
-    exe "vs | exe \"normal \<c-w>L\" | terminal " . l:command
+    exe "vs | wincmd L | enew"
+    call termopen(l:command, { "on_exit": a:completion })
   elseif g:vim_cmake_build_tool ==? 'vim-dispatch'
     let &makeprg = 'ninja -C ' . l:directory . ' ' . a:target
     Make
@@ -374,51 +438,63 @@ function! s:update_cache_file()
 endfunction
 
 function! s:cmake_pick_target()
-  call g:Parse_codemodel_json()
-  call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
-  call s:dump_current_target()
-  return
-  " if !g:Parse_codemodel_json()
-  "   return
-  " endif
-  " let l:names = []
-  " for target in g:tars
-  "   let l:name = keys(target)[0]
-  "   call add(l:names, l:name)
-  " endfor
+  call s:parse_codemodel_json_with_completion(function('s:_do_cmake_pick_target'))
+endf
 
-  " set makeprg=ninja
-  " call fzf#run({'source': l:names, 'sink': function('s:update_target'), 'down': len(l:names) + 2})
+function! s:cmake_pick_executable_target()
+  call s:parse_codemodel_json_with_completion(function('s:_do_cmake_pick_executable_target'))
+endf
+
+function! s:_do_cmake_pick_executable_target()
+  call s:cmake_get_target_and_run_action(g:execs, 's:update_target')
+  call s:dump_current_target()
 endfunction
 
-function! s:_run_current_target(job_id, data, event)
-  if a:data == 0
+function! s:_do_cmake_pick_target()
+  call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
+  call s:dump_current_target()
+endfunction
+
+function! s:_run_current_target(job_id, exit_code, event)
+  if a:exit_code == 0
     exe "vs | exe \"normal \<c-w>L\" | terminal " . g:cmake_target . " " . g:current_target_args
   endif
+  echo "3"
   let g:vim_cmake_build_tool = g:vim_cmake_build_tool_old
 endf
 
-function! s:cmake_run_current_target()
-  if len(g:cmake_target) == 0
-    echo 'Please select a target and try again.'
-    call g:Parse_codemodel_json()
+function! s:_do_run_current_target()
+  if g:cmake_target == ''
     call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
+  endif
+  if g:vim_cmake_build_tool != "vsplit"
+    let g:vim_cmake_build_tool_old = g:vim_cmake_build_tool
+    let g:vim_cmake_build_tool = "vsplit"
   else
     let g:vim_cmake_build_tool_old = g:vim_cmake_build_tool
-    let g:vim_cmake_build_tool = "job"
-    call s:cmake_build_current_target_with_completion(function("s:_run_current_target"))
   endif
+  call s:cmake_build_current_target_with_completion(function("s:_run_current_target"))
+endfunction
+
+function! s:cmake_run_current_target()
+  call s:parse_codemodel_json_with_completion(function("s:_do_run_current_target"))
 endfunction
 
 function! s:update_target(target)
+  let g:cmake_target_relative = g:tar_to_file[a:target]
+  let g:cmake_target_name = a:target
   let g:cmake_target = s:get_build_dir() . '/' . g:tar_to_file[a:target]
 
   let cache = s:get_cache_file()
   if !has_key(cache, getcwd())
     let cache[getcwd()] = {'current_target': g:cmake_target, 'targets':{}}
+    let cache[getcwd()] = {'current_target_relative': g:cmake_target_relative, 'targets':{}}
+    let cache[getcwd()] = {'current_target_name': g:cmake_target_name, 'targets':{}}
   else
     let dir = cache[getcwd()]
     let dir['current_target'] = g:cmake_target
+    let dir['current_target_relative'] = g:cmake_target_relative
+    let dir['current_target_name'] = g:cmake_target_name
   endif
   call s:update_cache_file()
 endfunction
@@ -446,9 +522,6 @@ function! s:cmake_pick_and_run_target()
 endfunction
 
 function! s:cmake_get_target_and_run_action(target_list, action)
-  if !g:Parse_codemodel_json()
-    return
-  endif
   let l:names = []
   for target in a:target_list
     let l:name = keys(target)[0]
@@ -460,29 +533,32 @@ function! s:cmake_get_target_and_run_action(target_list, action)
   call fzf#run({'source': l:names, 'sink': function(a:action), 'down': len(l:names) + 2})
 endfunction
 
-function! s:start_gdb(target)
+function! s:start_gdb(...)
   let l:args = ''
   try
-    exec '!cmake --build ' . s:get_build_dir() . ' --target ' . a:target
+    exec '!cmake --build ' . s:get_build_dir() . ' --target ' . g:cmake_target
   catch /.*/
-    echo 'Failed to build ' . a:target
+    echo 'Failed to build ' . g:cmake_target
   finally
     if exists('l:init_file')
       let l:gdb_init_arg = ' -s /tmp/gdbinitvimcmake '
     else
       let l:gdb_init_arg = ''
     endif
-    exec 'GdbStart gdb ' . s:get_build_dir() . '/' . a:target . l:gdb_init_arg . ' -- ' . l:args
+    exec 'GdbStart gdb ' . s:get_build_dir() . '/' . g:cmake_target . l:gdb_init_arg . ' -- ' . l:args
   endtry
 endfunction
 
-function! s:start_lldb(target)
+function! s:start_lldb(job_id, exit_code, event)
+  if a:exit_code != 0
+    return
+  endif
   let l:args = ''
   let l:data = s:get_cache_file()
   if has_key(l:data, getcwd())
     let l:dir = l:data[getcwd()]['targets']
-    if has_key(l:dir, s:get_build_dir() . '/' . a:target)
-      let l:target = l:dir[s:get_build_dir() . '/' . a:target]
+    if has_key(l:dir, s:get_build_dir() . '/' . g:cmake_target)
+      let l:target = l:dir[s:get_build_dir() . '/' . g:cmake_target]
       " if has_key(l:target, 'args')
       "   let l:args = l:target['args']
       "   echo l:args
@@ -502,53 +578,31 @@ function! s:start_lldb(target)
       endif
     endif
   endif
-  try
-    if g:cmake_target =~ s:get_build_dir()
-      let l:key = substitute(g:cmake_target, s:get_build_dir() . '/', '', 0)
-      let l:tar = g:file_to_tar[l:key]
-    else
-      let l:tar = g:cmake_target
-    endif
-    " call s:_build_target_with_completion(l:tar, function("s:_run_debugger"))
-    exec '!cmake --build ' . s:get_build_dir() . ' --target ' . l:tar
-  catch /.*/
-    echo 'Failed to build ' . a:target
-  finally
-    if exists('l:init_file')
-      let l:lldb_init_arg = ' -s /tmp/lldbinitvimcmake '
-    else
-      let l:lldb_init_arg = ''
-    endif
-    exec 'GdbStartLLDB lldb ' . a:target . l:lldb_init_arg . ' -- ' . g:current_target_args
-  endtry
+
+  if exists('l:init_file')
+    let l:lldb_init_arg = ' -s /tmp/lldbinitvimcmake '
+  else
+    let l:lldb_init_arg = ''
+  endif
+  exec 'GdbStartLLDB lldb ' . g:cmake_target . l:lldb_init_arg . ' -- ' . g:current_target_args
 endfunction
 
-function! s:cmake_debug()
-  if !g:Parse_codemodel_json()
+function! s:cmake_debug_current_target()
+  call s:parse_codemodel_json_with_completion(function("s:_do_debug_current_target"))
+endfunction
+
+function! s:_do_debug_current_target()
+  if g:cmake_target == v:null || get(g:tar_to_file, g:cmake_target_name, v:null) == v:null
+    echom "Please select a target first"
+    call s:cmake_get_target_and_run_action(g:execs, 's:update_target')
     return
   endif
-  let l:names = []
 
-  for target in g:execs
-    let l:name = values(target)[0]
-    call add(l:names, l:name)
-  endfor
-
-  if g:cmake_target == ''
-    if exists('g:vim_cmake_debugger')
-      if g:vim_cmake_debugger ==? 'gdb'
-        call fzf#run({'source': l:names, 'sink': function('s:start_gdb'), 'down': len(l:names) + 2})
-      else
-        call fzf#run({'source': l:names, 'sink': function('s:start_lldb'), 'down': len(l:names) + 2})
-      endif
-    endif
-  else
-    if exists('g:vim_cmake_debugger')
-      if g:vim_cmake_debugger ==? 'gdb'
-        call s:start_gdb(g:cmake_target)
-      else
-        call s:start_lldb(g:cmake_target)
-      endif
+  if exists('g:vim_cmake_debugger')
+    if g:vim_cmake_debugger ==? 'gdb'
+      call s:cmake_build_current_target_with_completion(function('s:start_gdb'))
+    else
+      call s:cmake_build_current_target_with_completion(function('s:start_lldb'))
     endif
   endif
 endfunction
@@ -683,9 +737,10 @@ command! -nargs=0 -complete=shellcmd CMakeConfigureAndGenerate call s:cmake_conf
 command! -nargs=0 -complete=shellcmd CMDBConfigureAndGenerate call s:cmdb_configure_and_generate()
 
 command! -nargs=0 -complete=shellcmd CMakeCompileCurrentFile call s:cmake_compile_current_file()
-command! -nargs=0 -complete=shellcmd CMakeDebugWithNvimLLDB call s:cmake_debug()
+command! -nargs=0 -complete=shellcmd CMakeDebugWithNvimLLDB call s:cmake_debug_current_target()
 
 command! -nargs=0 -complete=shellcmd CMakePickTarget call s:cmake_pick_target()
+command! -nargs=0 -complete=shellcmd CMakePickExecutableTarget call s:cmake_pick_executable_target()
 command! -nargs=0 -complete=shellcmd CMakeRunCurrentTarget call s:cmake_run_current_target()
 command! -nargs=* -complete=shellcmd CMakeSetCurrentTargetRunArgs call s:cmake_set_current_target_run_args(<f-args>)
 command! -nargs=0 -complete=shellcmd CMakeBuildCurrentTarget call s:cmake_build_current_target()
