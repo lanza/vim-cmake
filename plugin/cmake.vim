@@ -328,6 +328,8 @@ function! s:_build_target(target)
   call s:_build_target_with_completion(a:target, v:null)
 endf
 
+let g:cmake_last_window = v:null
+
 function! s:_build_target_with_completion(target, completion)
   if s:is_absolute_path(s:get_build_dir())
     let l:directory = s:get_build_dir()
@@ -341,6 +343,7 @@ function! s:_build_target_with_completion(target, completion)
     echom a:completion
     let l:command = 'cmake --build ' . s:get_build_dir() . ' --target ' . a:target
     exe "vs | wincmd L | enew"
+    let g:cmake_last_window = nvim_get_current_win()
     call termopen(l:command, { "on_exit": a:completion })
   elseif g:vim_cmake_build_tool ==? 'vim-dispatch'
     let &makeprg = 'ninja -C ' . l:directory . ' ' . a:target
@@ -553,19 +556,14 @@ function! s:start_lldb(job_id, exit_code, event)
   if a:exit_code != 0
     return
   endif
-  let l:args = ''
+  let l:commands = ['b main', 'r']
   let l:data = s:get_cache_file()
   if has_key(l:data, getcwd())
     let l:dir = l:data[getcwd()]['targets']
     if has_key(l:dir, s:get_build_dir() . '/' . g:cmake_target)
       let l:target = l:dir[s:get_build_dir() . '/' . g:cmake_target]
-      " if has_key(l:target, 'args')
-      "   let l:args = l:target['args']
-      "   echo l:args
-      " endif
       if has_key(l:target, 'breakpoints')
         let l:breakpoints = l:target['breakpoints']
-        let l:commands = []
         for b in l:breakpoints
           if b['enabled']
             let break = 'b ' . b['text']
@@ -573,10 +571,15 @@ function! s:start_lldb(job_id, exit_code, event)
           endif
         endfor
         call add(l:commands, 'r')
-        let l:init_file = '/tmp/lldbinitvimcmake'
-        let l:f = writefile(l:commands, l:init_file)
       endif
     endif
+  endif
+
+  let l:init_file = '/tmp/lldbinitvimcmake'
+  let l:f = writefile(l:commands, l:init_file)
+
+  if g:cmake_last_window != v:null
+    call nvim_win_close(g:cmake_last_window, v:true)
   endif
 
   if exists('l:init_file')
@@ -584,6 +587,7 @@ function! s:start_lldb(job_id, exit_code, event)
   else
     let l:lldb_init_arg = ''
   endif
+  setlocal signcolumn=yes
   exec 'GdbStartLLDB lldb ' . g:cmake_target . l:lldb_init_arg . ' -- ' . g:current_target_args
 endfunction
 
