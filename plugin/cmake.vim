@@ -301,8 +301,11 @@ function! s:cmake_configure_and_generate_with_completion(completion)
   call s:get_only_window()
   echo l:command
   call termopen(split(l:command), {'on_exit': a:completion})
-  exe 'silent !test -L compile_commands.json || test -e compile_commands.json || ln -s ' . s:get_build_dir() . '/compile_commands.json .'
+  " let l:link_cc_path = getcwd() . '/' . s:get_source_dir() . '/compile_commands.json'
+  " let l:build_cc_path = getcwd() . '/' . s:get_build_dir() . '/compile_commands.json'
+  " exe 'silent !test -L ' . l:link_cc_path . ' || test -e ' . l:link_cc_path . ' || ln -s ' . l:build_cc_path . .'
 endf
+
 
 function! s:cmake_build_current_target()
   call s:cmake_build_current_target_with_completion(s:noop)
