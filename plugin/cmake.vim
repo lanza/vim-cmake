@@ -482,6 +482,11 @@ function! s:_do_cmake_pick_target()
   call s:dump_current_target()
 endfunction
 
+function s:cmake_close_windows()
+  call s:close_last_window_if_open()
+  call s:close_last_buffer_if_open()
+endf
+
 function! s:close_last_window_if_open()
   if s:check_if_window_is_alive(g:cmake_last_window)
     call nvim_win_close(g:cmake_last_window, v:true)
@@ -791,4 +796,6 @@ command! -nargs=0 -complete=shellcmd CMakeBuildAll call s:cmake_build_all()
 command! -nargs=0 -complete=shellcmd CMakeCompileCurrentFile call s:cmake_compile_current_file()
 
 command! -nargs=* -complete=shellcmd CMakeCreateFile call s:cmake_create_file(<f-args>)
+
+command! -nargs=0 -complete=shellcmd CMakeCloseWindow call s:cmake_close_windows()
 
