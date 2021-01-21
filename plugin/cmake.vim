@@ -279,7 +279,6 @@ function! s:check_if_window_is_alive(win)
 endf
 
 function! s:check_if_buffer_is_alive(buf)
-  echo a:buf
   if index(nvim_list_bufs(), a:buf) > -1
     return v:true
   else
@@ -328,7 +327,7 @@ let s:noop = function('s:noop_function')
 
 function! s:_do_build_current_target_with_completion(completion)
   if g:cmake_target == v:null
-    echom "Please select a target first"
+    echo "Please select a target first"
     call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
     return
   endif
@@ -424,7 +423,6 @@ function! s:cmake_build_non_artifacts()
   call fzf#run({'source': l:names, 'sink': l:command , 'down': len(l:names) + 2})
   ". l:command
   " silent let l:res = system(l:command)
-  " echo l:res
 endfunction
 
 if !exists('g:vim_cmake_build_tool')
@@ -554,7 +552,7 @@ function! s:update_target(target)
 endfunction
 
 function! s:dump_current_target()
-  echom "Current target set to '" . g:cmake_target . "' with args '" . g:current_target_args . "'"
+  echo "Current target set to '" . g:cmake_target . "' with args '" . g:current_target_args . "'"
 endfunction
 
 function! s:cmake_run_target_with_name(target)
@@ -647,7 +645,7 @@ endfunction
 
 function! s:_do_debug_current_target()
   if g:cmake_target == v:null || get(g:tar_to_file, g:cmake_target_name, v:null) == v:null
-    echom "Please select a target first"
+    echo "Please select a target first"
     call s:cmake_get_target_and_run_action(g:execs, 's:update_target')
     return
   endif
