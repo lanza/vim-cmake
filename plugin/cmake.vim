@@ -469,6 +469,10 @@ function! s:cmake_build_all()
 
 endfunction
 
+function! s:save_cache_file()
+  call s:update_cache_file()
+endfunction
+
 function! s:update_cache_file()
   let cache = s:get_cache_file()
   let serial = s:encode_json(cache)
@@ -668,6 +672,7 @@ function! s:cmake_set_cmake_args(...)
   let g:cmake_arguments = a:000
   let c = s:get_cwd_cache()
   let c['cmake_args'] = a:000
+  call s:update_cache_file()
 endfunction
 
 function! g:GetCMakeArgs()
