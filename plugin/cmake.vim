@@ -169,6 +169,11 @@ try
 catch /.*/
   let g:current_target_args = ''
 endtry
+try
+  let g:cmake_arguments = s:cache_file[getcwd()]["cmake_args"]
+catch /.*/
+  let g:cmake_arguments = []
+endtry
 
 let g:cmake_export_compile_commands = 1
 let g:cmake_generator = 'Ninja'
