@@ -595,20 +595,37 @@ function! s:cmake_get_target_and_run_action(target_list, action)
   call fzf#run({'source': l:names, 'sink': function(a:action), 'down': len(l:names) + 2})
 endfunction
 
-function! s:start_gdb(...)
-  let l:args = ''
-  try
-    exec '!cmake --build ' . s:get_build_dir() . ' --target ' . g:cmake_target
-  catch /.*/
-    echo 'Failed to build ' . g:cmake_target
-  finally
-    if exists('l:init_file')
-      let l:gdb_init_arg = ' -s /tmp/gdbinitvimcmake '
-    else
-      let l:gdb_init_arg = ''
+function! s:start_gdb(job_id, exit_code, event)
+  if a:exit_code != 0
+    return
+  endif
+  let l:commands = ['b main', 'r']
+  let l:data = s:get_cache_file()
+  if has_key(l:data, getcwd())
+    let l:dir = l:data[getcwd()]['targets']
+    if has_key(l:dir, s:get_build_dir() . '/' . g:cmake_target)
+      let l:target = l:dir[s:get_build_dir() . '/' . g:cmake_target]
+      if has_key(l:target, 'breakpoints')
+        let l:breakpoints = l:target['breakpoints']
+        for b in l:breakpoints
+          if b['enabled']
+            let break = 'b ' . b['text']
+            call add(l:commands, break)
+          endif
+        endfor
+        call add(l:commands, 'r')
+      endif
     endif
-    exec 'GdbStart gdb ' . s:get_build_dir() . '/' . g:cmake_target . l:gdb_init_arg . ' -- ' . l:args
-  endtry
+  endif
+
+  let l:init_file = '/tmp/gdbinitvimcmake'
+  let l:f = writefile(l:commands, l:init_file)
+
+  call s:close_last_window_if_open()
+  call s:close_last_buffer_if_open()
+
+  let l:gdb_init_arg = ' -x /tmp/ginitvimcmake '
+  exec 'GdbStart gdb ' . g:cmake_target . l:gdb_init_arg . ' -- ' . g:current_target_args
 endfunction
 
 function! s:start_lldb(job_id, exit_code, event)
