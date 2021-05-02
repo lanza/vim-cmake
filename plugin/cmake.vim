@@ -665,6 +665,16 @@ function! s:start_lldb(job_id, exit_code, event)
   exec 'GdbStartLLDB lldb ' . g:cmake_target . l:lldb_init_arg . ' -- ' . g:current_target_args
 endfunction
 
+function! s:cmake_debug_current_target_lldb()
+  let g:vim_cmake_debugger = 'lldb'
+  call s:cmake_debug_current_target()
+endf
+
+function! s:cmake_debug_current_target_gdb()
+  let g:vim_cmake_debugger = 'gdb'
+  call s:cmake_debug_current_target()
+endf
+
 function! s:cmake_debug_current_target()
   call s:parse_codemodel_json_with_completion(function("s:_do_debug_current_target"))
 endfunction
@@ -816,7 +826,8 @@ command! -nargs=0 -complete=shellcmd CMakeConfigureAndGenerate call s:cmake_conf
 command! -nargs=0 -complete=shellcmd CMDBConfigureAndGenerate call s:cmdb_configure_and_generate()
 
 command! -nargs=0 -complete=shellcmd CMakeCompileCurrentFile call s:cmake_compile_current_file()
-command! -nargs=0 -complete=shellcmd CMakeDebugWithNvimLLDB call s:cmake_debug_current_target()
+command! -nargs=0 -complete=shellcmd CMakeDebugWithNvimLLDB call s:cmake_debug_current_target_lldb()
+command! -nargs=0 -complete=shellcmd CMakeDebugWithNvimGDB call s:cmake_debug_current_target_gdb()
 
 command! -nargs=0 -complete=shellcmd CMakePickTarget call s:cmake_pick_target()
 command! -nargs=0 -complete=shellcmd CMakePickExecutableTarget call s:cmake_pick_executable_target()
