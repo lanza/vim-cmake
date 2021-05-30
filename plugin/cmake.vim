@@ -239,36 +239,37 @@ function! s:cmdb_configure_and_generate()
   exec 'CMDB ' . s:get_cmake_argument_string()
 endfunction
 
-python3 << endpython
-import os
-import vim
+" python3 << endpython
+" import os
+" import vim
 
-def get_build_relative_path(build, path):
-    path = os.path.relpath(path, build)
-    vim.command('return "%s"' % path)
+" def get_build_relative_path(build, path):
+"     path = os.path.relpath(path, build)
+"     vim.command('return "%s"' % path)
 
-def get_path_to_current_buffer():
-    path = vim.current.buffer.name
-    vim.command('return "%s"' % path)
-endpython
+" def get_path_to_current_buffer():
+"     path = vim.current.buffer.name
+"     vim.command('return "%s"' % path)
+" endpython
 
-function! s:get_path_to_current_buffer()
-  python3 get_path_to_current_buffer()
-endfunction
+" function! s:get_path_to_current_buffer()
+"   python3 get_path_to_current_buffer()
+" endfunction
 
-function! s:get_build_relative_path(current_path)
-  python3 get_build_relative_path(vim.call('s:get_build_dir()'), vim.eval('a:current_path'))
-endfunction
+" function! s:get_build_relative_path(current_path)
+"   python3 get_build_relative_path(vim.call('s:get_build_dir()'), vim.eval('a:current_path'))
+" endfunction
 
 
 function! s:cmake_compile_current_file()
-  let l:current_path = s:get_path_to_current_buffer()
-  let l:rel_path = s:get_build_relative_path(l:current_path)
-  let &makeprg = 'ninja -C ' .  s:get_build_dir() . ' ' . l:rel_path . '^'
-  Make
-  if !has('gui_running')
-    redraw!
-  endif
+  echom "This is not currently working"
+  " let l:current_path = s:get_path_to_current_buffer()
+  " let l:rel_path = s:get_build_relative_path(l:current_path)
+  " let &makeprg = 'ninja -C ' .  s:get_build_dir() . ' ' . l:rel_path . '^'
+  " Make
+  " if !has('gui_running')
+  "   redraw!
+  " endif
 endfunction
 
 function g:CMake_configure_and_generate()
