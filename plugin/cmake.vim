@@ -633,7 +633,7 @@ function! s:start_lldb(job_id, exit_code, event)
   if a:exit_code != 0
     return
   endif
-  let l:commands = ['b main', 'r']
+  let l:commands = ["breakpoint set --func-regex '^main$'", 'r']
   let l:data = s:get_cache_file()
   if has_key(l:data, getcwd())
     let l:dir = l:data[getcwd()]['targets']
