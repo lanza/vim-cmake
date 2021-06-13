@@ -666,6 +666,48 @@ function! s:start_lldb(job_id, exit_code, event)
   exec 'GdbStartLLDB lldb ' . g:cmake_target . l:lldb_init_arg . ' -- ' . g:current_target_args
 endfunction
 
+function! s:start_nvim_dap_lldb_vscode(job_id, exit_code, event)
+  if a:exit_code != 0
+    return
+  endif
+  let l:commands = ["breakpoint set --func-regex '^main$'", 'r']
+  let l:data = s:get_cache_file()
+  if has_key(l:data, getcwd())
+    let l:dir = l:data[getcwd()]['targets']
+    if has_key(l:dir, s:get_build_dir() . '/' . g:cmake_target)
+      let l:target = l:dir[s:get_build_dir() . '/' . g:cmake_target]
+      if has_key(l:target, 'breakpoints')
+        let l:breakpoints = l:target['breakpoints']
+        for b in l:breakpoints
+          if b['enabled']
+            let break = 'b ' . b['text']
+            call add(l:commands, break)
+          endif
+        endfor
+      endif
+    endif
+  endif
+
+  let l:init_file = '/tmp/lldbinitvimcmake'
+  let l:f = writefile(l:commands, l:init_file)
+
+  call s:close_last_window_if_open()
+  call s:close_last_buffer_if_open()
+
+  if exists('l:init_file')
+    let l:lldb_init_arg = ' /tmp/lldbinitvimcmake '
+  else
+    let l:lldb_init_arg = ''
+  endif
+  exec 'DebugLldb ' . g:cmake_target . l:lldb_init_arg . ' -- ' . g:current_target_args
+  " exec 'DebugLldb ' . g:cmake_target . l:lldb_init_arg . ' -- ' . g:current_target_args
+endfunction
+
+function! s:cmake_debug_current_target_nvim_dap_lldb_vscode()
+  let g:vim_cmake_debugger = 'nvim_dap_lldb_vscode'
+  call s:cmake_debug_current_target()
+endf
+
 function! s:cmake_debug_current_target_lldb()
   let g:vim_cmake_debugger = 'lldb'
   call s:cmake_debug_current_target()
@@ -690,8 +732,10 @@ function! s:_do_debug_current_target()
   if exists('g:vim_cmake_debugger')
     if g:vim_cmake_debugger ==? 'gdb'
       call s:cmake_build_current_target_with_completion(function('s:start_gdb'))
-    else
+    elseif g:vim_cmake_debugger ==? 'lldb'
       call s:cmake_build_current_target_with_completion(function('s:start_lldb'))
+    else
+      call s:cmake_build_current_target_with_completion(function('s:start_nvim_dap_lldb_vscode'))
     endif
   endif
 endfunction
@@ -829,6 +873,7 @@ command! -nargs=0 -complete=shellcmd CMDBConfigureAndGenerate call s:cmdb_config
 command! -nargs=0 -complete=shellcmd CMakeCompileCurrentFile call s:cmake_compile_current_file()
 command! -nargs=0 -complete=shellcmd CMakeDebugWithNvimLLDB call s:cmake_debug_current_target_lldb()
 command! -nargs=0 -complete=shellcmd CMakeDebugWithNvimGDB call s:cmake_debug_current_target_gdb()
+command! -nargs=0 -complete=shellcmd CMakeDebugWithNvimDapLLDBVSCode call s:cmake_debug_current_target_nvim_dap_lldb_vscode()
 
 command! -nargs=0 -complete=shellcmd CMakePickTarget call s:cmake_pick_target()
 command! -nargs=0 -complete=shellcmd CMakePickExecutableTarget call s:cmake_pick_executable_target()
