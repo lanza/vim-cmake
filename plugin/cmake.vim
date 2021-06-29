@@ -699,7 +699,7 @@ function! s:start_nvim_dap_lldb_vscode(job_id, exit_code, event)
   else
     let l:lldb_init_arg = ''
   endif
-  exec 'DebugLldb ' . g:cmake_target . l:lldb_init_arg . ' -- ' . g:current_target_args
+  exec 'DebugLldb ' . g:cmake_target . ' --lldbinit ' . l:lldb_init_arg . ' -- ' . g:current_target_args
   " exec 'DebugLldb ' . g:cmake_target . l:lldb_init_arg . ' -- ' . g:current_target_args
 endfunction
 
