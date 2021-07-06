@@ -751,12 +751,12 @@ function! g:GetCMakeArgs()
   return get(s:get_cwd_cache(), "cmake_args", [])
 endfunction
 
-function! s:cmake_set_current_target_run_args(...)
+function! s:cmake_set_current_target_run_args(args)
   if g:cmake_target ==? ''
     call s:cmake_target()
     return
   endif
-  let s = join(a:000, ' ')
+  let s = a:args
   let c = s:get_target_cache()
   let c['args'] = s
   let g:current_target_args = s
@@ -878,7 +878,7 @@ command! -nargs=0 -complete=shellcmd CMakeDebugWithNvimDapLLDBVSCode call s:cmak
 command! -nargs=0 -complete=shellcmd CMakePickTarget call s:cmake_pick_target()
 command! -nargs=0 -complete=shellcmd CMakePickExecutableTarget call s:cmake_pick_executable_target()
 command! -nargs=0 -complete=shellcmd CMakeRunCurrentTarget call s:cmake_run_current_target()
-command! -nargs=* -complete=shellcmd CMakeSetCurrentTargetRunArgs call s:cmake_set_current_target_run_args(<f-args>)
+command! -nargs=* -complete=shellcmd CMakeSetCurrentTargetRunArgs call s:cmake_set_current_target_run_args(<q-args>)
 command! -nargs=0 -complete=shellcmd CMakeBuildCurrentTarget call s:cmake_build_current_target()
 
 command! -nargs=0 -complete=shellcmd CMakeClean call s:cmake_clean()
