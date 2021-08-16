@@ -861,32 +861,32 @@ function! s:cmake_open_cache_file()
   exe 'e ' . s:get_build_dir() . '/CMakeCache.txt'
 endf
 
-command! -nargs=0 -complete=shellcmd CMakeOpenCacheFile call s:cmake_open_cache_file()
+command! -nargs=1 -complete=shellcmd CMakeOpenCacheFile call s:cmake_open_cache_file()
 
 command! -nargs=* -complete=shellcmd CMakeSetCMakeArgs call s:cmake_set_cmake_args(<f-args>)
 command! -nargs=1 -complete=shellcmd CMakeSetBuildDir call s:cmake_set_build_dir(<f-args>)
 command! -nargs=1 -complete=shellcmd CMakeSetSourceDir call s:cmake_set_source_dir(<f-args>)
 
-command! -nargs=0 -complete=shellcmd CMakeConfigureAndGenerate call s:cmake_configure_and_generate()
-command! -nargs=0 -complete=shellcmd CMDBConfigureAndGenerate call s:cmdb_configure_and_generate()
+command! -nargs=1 -complete=shellcmd CMakeConfigureAndGenerate call s:cmake_configure_and_generate()
+command! -nargs=1 -complete=shellcmd CMDBConfigureAndGenerate call s:cmdb_configure_and_generate()
 
-command! -nargs=0 -complete=shellcmd CMakeCompileCurrentFile call s:cmake_compile_current_file()
-command! -nargs=0 -complete=shellcmd CMakeDebugWithNvimLLDB call s:cmake_debug_current_target_lldb()
-command! -nargs=0 -complete=shellcmd CMakeDebugWithNvimGDB call s:cmake_debug_current_target_gdb()
-command! -nargs=0 -complete=shellcmd CMakeDebugWithNvimDapLLDBVSCode call s:cmake_debug_current_target_nvim_dap_lldb_vscode()
+command! -nargs=1 -complete=shellcmd CMakeCompileCurrentFile call s:cmake_compile_current_file()
+command! -nargs=1 -complete=shellcmd CMakeDebugWithNvimLLDB call s:cmake_debug_current_target_lldb()
+command! -nargs=1 -complete=shellcmd CMakeDebugWithNvimGDB call s:cmake_debug_current_target_gdb()
+command! -nargs=1 -complete=shellcmd CMakeDebugWithNvimDapLLDBVSCode call s:cmake_debug_current_target_nvim_dap_lldb_vscode()
 
-command! -nargs=0 -complete=shellcmd CMakePickTarget call s:cmake_pick_target()
-command! -nargs=0 -complete=shellcmd CMakePickExecutableTarget call s:cmake_pick_executable_target()
-command! -nargs=0 -complete=shellcmd CMakeRunCurrentTarget call s:cmake_run_current_target()
+command! -nargs=1 -complete=shellcmd CMakePickTarget call s:cmake_pick_target()
+command! -nargs=1 -complete=shellcmd CMakePickExecutableTarget call s:cmake_pick_executable_target()
+command! -nargs=1 -complete=shellcmd CMakeRunCurrentTarget call s:cmake_run_current_target()
 command! -nargs=* -complete=shellcmd CMakeSetCurrentTargetRunArgs call s:cmake_set_current_target_run_args(<q-args>)
-command! -nargs=0 -complete=shellcmd CMakeBuildCurrentTarget call s:cmake_build_current_target()
+command! -nargs=1 -complete=shellcmd CMakeBuildCurrentTarget call s:cmake_build_current_target()
 
-command! -nargs=0 -complete=shellcmd CMakeClean call s:cmake_clean()
-command! -nargs=0 -complete=shellcmd CMakeBuildAll call s:cmake_build_all()
+command! -nargs=1 -complete=shellcmd CMakeClean call s:cmake_clean()
+command! -nargs=1 -complete=shellcmd CMakeBuildAll call s:cmake_build_all()
 
-command! -nargs=0 -complete=shellcmd CMakeCompileCurrentFile call s:cmake_compile_current_file()
+command! -nargs=1 -complete=shellcmd CMakeCompileCurrentFile call s:cmake_compile_current_file()
 
 command! -nargs=* -complete=shellcmd CMakeCreateFile call s:cmake_create_file(<f-args>)
 
-command! -nargs=0 -complete=shellcmd CMakeCloseWindow call s:cmake_close_windows()
+command! -nargs=1 -complete=shellcmd CMakeCloseWindow call s:cmake_close_windows()
 
