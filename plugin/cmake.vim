@@ -877,7 +877,7 @@ command! -nargs=1 -complete=shellcmd CMakeDebugWithNvimDapLLDBVSCode call s:cmak
 
 command! -nargs=0 CMakePickTarget call s:cmake_pick_target()
 command! -nargs=1 -complete=shellcmd CMakePickExecutableTarget call s:cmake_pick_executable_target()
-command! -nargs=1 -complete=shellcmd CMakeRunCurrentTarget call s:cmake_run_current_target()
+command! -nargs=0 CMakeRunCurrentTarget call s:cmake_run_current_target()
 command! -nargs=* -complete=shellcmd CMakeSetCurrentTargetRunArgs call s:cmake_set_current_target_run_args(<q-args>)
 command! -nargs=0 CMakeBuildCurrentTarget call s:cmake_build_current_target()
 
