@@ -875,11 +875,11 @@ command! -nargs=1 -complete=shellcmd CMakeDebugWithNvimLLDB call s:cmake_debug_c
 command! -nargs=1 -complete=shellcmd CMakeDebugWithNvimGDB call s:cmake_debug_current_target_gdb()
 command! -nargs=1 -complete=shellcmd CMakeDebugWithNvimDapLLDBVSCode call s:cmake_debug_current_target_nvim_dap_lldb_vscode()
 
-command! -nargs=1 -complete=shellcmd CMakePickTarget call s:cmake_pick_target()
+command! -nargs=0 CMakePickTarget call s:cmake_pick_target()
 command! -nargs=1 -complete=shellcmd CMakePickExecutableTarget call s:cmake_pick_executable_target()
 command! -nargs=1 -complete=shellcmd CMakeRunCurrentTarget call s:cmake_run_current_target()
 command! -nargs=* -complete=shellcmd CMakeSetCurrentTargetRunArgs call s:cmake_set_current_target_run_args(<q-args>)
-command! -nargs=1 -complete=shellcmd CMakeBuildCurrentTarget call s:cmake_build_current_target()
+command! -nargs=0 CMakeBuildCurrentTarget call s:cmake_build_current_target()
 
 command! -nargs=1 -complete=shellcmd CMakeClean call s:cmake_clean()
 command! -nargs=1 -complete=shellcmd CMakeBuildAll call s:cmake_build_all()
