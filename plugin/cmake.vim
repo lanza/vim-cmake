@@ -867,7 +867,7 @@ command! -nargs=* -complete=shellcmd CMakeSetCMakeArgs call s:cmake_set_cmake_ar
 command! -nargs=1 -complete=shellcmd CMakeSetBuildDir call s:cmake_set_build_dir(<f-args>)
 command! -nargs=1 -complete=shellcmd CMakeSetSourceDir call s:cmake_set_source_dir(<f-args>)
 
-command! -nargs=1 -complete=shellcmd CMakeConfigureAndGenerate call s:cmake_configure_and_generate()
+command! -nargs=0  CMakeConfigureAndGenerate call s:cmake_configure_and_generate()
 command! -nargs=1 -complete=shellcmd CMDBConfigureAndGenerate call s:cmdb_configure_and_generate()
 
 command! -nargs=1 -complete=shellcmd CMakeCompileCurrentFile call s:cmake_compile_current_file()
