@@ -115,6 +115,7 @@ function! s:_do_parse_codemodel_json()
     else
       let l:type = l:target_file_data['type']
       call add(g:all_tars , {l:name : l:type})
+      call add(g:tars , {l:name : ""})
     endif
   endfor
   return 1
