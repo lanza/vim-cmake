@@ -237,39 +237,6 @@ function! s:cmdb_configure_and_generate()
   exec 'CMDB ' . s:get_cmake_argument_string()
 endfunction
 
-" python3 << endpython
-" import os
-" import vim
-
-" def get_build_relative_path(build, path):
-"     path = os.path.relpath(path, build)
-"     vim.command('return "%s"' % path)
-
-" def get_path_to_current_buffer():
-"     path = vim.current.buffer.name
-"     vim.command('return "%s"' % path)
-" endpython
-
-" function! s:get_path_to_current_buffer()
-"   python3 get_path_to_current_buffer()
-" endfunction
-
-" function! s:get_build_relative_path(current_path)
-"   python3 get_build_relative_path(vim.call('s:get_build_dir()'), vim.eval('a:current_path'))
-" endfunction
-
-
-function! s:cmake_compile_current_file()
-  echom "This is not currently working"
-  " let l:current_path = s:get_path_to_current_buffer()
-  " let l:rel_path = s:get_build_relative_path(l:current_path)
-  " let &makeprg = 'ninja -C ' .  s:get_build_dir() . ' ' . l:rel_path . '^'
-  " Make
-  " if !has('gui_running')
-  "   redraw!
-  " endif
-endfunction
-
 function g:CMake_configure_and_generate()
   call s:cmake_configure_and_generate()
 endfunction
@@ -832,7 +799,6 @@ command! -nargs=1 -complete=shellcmd CMakeSetSourceDir call s:cmake_set_source_d
 command! -nargs=0  CMakeConfigureAndGenerate call s:cmake_configure_and_generate()
 command! -nargs=1 -complete=shellcmd CMDBConfigureAndGenerate call s:cmdb_configure_and_generate()
 
-command! -nargs=0 CMakeCompileCurrentFile call s:cmake_compile_current_file()
 command! -nargs=0 CMakeDebugWithNvimLLDB call s:cmake_debug_current_target_lldb()
 command! -nargs=0 CMakeDebugWithNvimGDB call s:cmake_debug_current_target_gdb()
 command! -nargs=0 CMakeDebugWithNvimDapLLDBVSCode call s:cmake_debug_current_target_nvim_dap_lldb_vscode()
@@ -845,8 +811,6 @@ command! -nargs=0 CMakeBuildCurrentTarget call s:cmake_build_current_target()
 
 command! -nargs=1 -complete=shellcmd CMakeClean call s:cmake_clean()
 command! -nargs=1 -complete=shellcmd CMakeBuildAll call s:cmake_build_all()
-
-command! -nargs=1 -complete=shellcmd CMakeCompileCurrentFile call s:cmake_compile_current_file()
 
 command! -nargs=* -complete=shellcmd CMakeCreateFile call s:cmake_create_file(<f-args>)
 
