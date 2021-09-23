@@ -507,13 +507,6 @@ function! s:cmake_run_target_with_name(target)
   endtry
 endfunction
 
-function! s:cmake_pick_and_run_target()
-  if !exists('g:execs')
-    call g:Parse_codemodel_json()
-  endif
-  call s:cmake_get_target_and_run_action(g:execs, 's:cmake_run_target_with_name')
-endfunction
-
 function! s:cmake_get_target_and_run_action(target_list, action)
   let l:names = []
   for target in a:target_list
