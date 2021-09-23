@@ -543,9 +543,14 @@ function! s:cmake_run_current_target()
 endfunction
 
 function! s:update_target(target)
-  let g:cmake_target_relative = g:tar_to_file[a:target]
   let g:cmake_target_name = a:target
-  let g:cmake_target = s:get_build_dir() . '/' . g:tar_to_file[a:target]
+  if has_key(g:tar_to_file, a:target)
+    let g:cmake_target_relative = g:tar_to_file[a:target]
+    let g:cmake_target_file = s:get_build_dir() . '/' . g:tar_to_file[a:target]
+  else
+    let g:cmake_target_relative = ""
+    let g:cmake_target_file = ""
+  end
 
   let cache = s:get_cache_file()
   if !has_key(cache, getcwd())
