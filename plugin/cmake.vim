@@ -682,7 +682,7 @@ function! s:cmake_set_current_target_run_args(args)
   call s:dump_current_target()
 endfunction
 
-function!  s:get_targets_cache()
+function! s:get_targets_cache()
   let c = s:get_cwd_cache()
   if !has_key(c, 'targets')
     let c['targets'] = {}
