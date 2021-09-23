@@ -45,7 +45,6 @@ else
 endif
 
 let g:cmake_tool = 'cmake'
-let g:cmake_window_id = -1
 let g:cmake_target_file = v:null
 let g:cmake_target_relative = v:null
 let g:cmake_target_name = v:null
@@ -152,31 +151,29 @@ function! s:parse_codemodel_json_with_completion(completion)
   endif
 endfunction
 
-let s:cache_file = s:get_cache_file()
-let g:cmake_cache_file = s:cache_file
+let g:cmake_cache_file = s:get_cache_file()
 
 " this shouldn't be here...
 try
-  let g:cmake_target_file = s:cache_file[getcwd()].current_target
-  let g:cmake_target_relative = s:cache_file[getcwd()].current_target_relative
-  let g:cmake_target_name = s:cache_file[getcwd()].current_target_name
+  let g:cmake_target_file = g:cmake_cache_file[getcwd()].current_target
+  let g:cmake_target_relative = g:cmake_cache_file[getcwd()].current_target_relative
+  let g:cmake_target_name = g:cmake_cache_file[getcwd()].current_target_name
 catch /.*/
   let g:cmake_target_file = v:null
   let g:cmake_target_relative = v:null
   let g:cmake_target_name = v:null
 endtry
 try
-  let g:current_target_args = s:cache_file[getcwd()]["targets"][g:cmake_target_file].args
+  let g:current_target_args = g:cmake_cache_file[getcwd()]["targets"][g:cmake_target_file].args
 catch /.*/
   let g:current_target_args = ''
 endtry
 try
-  let g:cmake_arguments = s:cache_file[getcwd()]["cmake_args"]
+  let g:cmake_arguments = g:cmake_cache_file[getcwd()]["cmake_args"]
 catch /.*/
   let g:cmake_arguments = []
 endtry
 
-let g:cmake_export_compile_commands = 1
 let g:cmake_generator = 'Ninja'
 
 function! s:make_query_files()
