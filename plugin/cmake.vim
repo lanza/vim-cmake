@@ -597,7 +597,6 @@ function! s:cmake_get_target_and_run_action(target_list, action)
   endfor
 
   set makeprg=ninja
-  "call fzf#run({'source': l:names, 'sink': function('s:update_target'), 'down': len(l:names) + 2})
   call fzf#run({'source': l:names, 'sink': function(a:action), 'down': len(l:names) + 2})
 endfunction
 
