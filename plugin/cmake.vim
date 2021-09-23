@@ -669,10 +669,6 @@ function! s:cmake_set_cmake_args(...)
   call s:update_cache_file()
 endfunction
 
-function! g:GetCMakeArgs()
-  return get(s:get_cwd_cache(), "cmake_args", [])
-endfunction
-
 function! s:cmake_set_current_target_run_args(args)
   if g:cmake_target_file ==? ''
     call s:cmake_target()
@@ -684,11 +680,6 @@ function! s:cmake_set_current_target_run_args(args)
   let g:current_target_args = s
   call s:update_cache_file()
   call s:dump_current_target()
-endfunction
-
-function! g:GetCMakeCurrentTargetRunArgs()
-  let c = s:get_target_cache()
-  return get(c, 'args', "")
 endfunction
 
 function!  s:get_targets_cache()
