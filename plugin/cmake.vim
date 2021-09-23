@@ -339,16 +339,6 @@ function! s:_do_build_current_target_with_completion(completion)
     return
   endif
 
-  let l:tar = ''
-  " This needs to test if the g:cmake_target is a ninja target or an absolute
-  " path. I'm not sure why it can be both, I should fix that...
-  if g:cmake_target =~ s:get_build_dir()
-    let l:key = substitute(g:cmake_target, s:get_build_dir() . '/', '', 0)
-    let l:tar = g:file_to_tar[l:key]
-  else
-    let l:tar = g:cmake_target
-  endif
-
   call s:_build_target_with_completion(g:cmake_target_name, a:completion)
 endfunction
 
