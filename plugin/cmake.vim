@@ -401,36 +401,6 @@ function! s:_build_target_with_completion(target, completion)
   endif
 endfunction
 
-function! s:cmake_pick_and_build_target()
-  if !g:Parse_codemodel_json()
-    return
-  endif
-  let l:names = []
-  for target in g:tars
-    let l:name = keys(target)[0]
-    call add(l:names, l:name)
-  endfor
-
-  call fzf#run({'source': l:names, 'sink': function('s:_build_target'), 'down': len(l:names) + 2})
-endfunction
-
-function! s:cmake_build_non_artifacts()
-  if !g:Parse_codemodel_json()
-    return
-  endif
-  let l:command = '!cmake --build ' . s:get_build_dir() . ' --target'
-  let l:names = []
-  for target in g:all_tars
-    let l:name = keys(target)[0]
-    call add(l:names, l:name)
-  endfor
-
-  set makeprg=ninja
-  call fzf#run({'source': l:names, 'sink': l:command , 'down': len(l:names) + 2})
-  ". l:command
-  " silent let l:res = system(l:command)
-endfunction
-
 if !exists('g:vim_cmake_build_tool')
   let g:vim_cmake_build_tool = 'vsplit'
 endif
