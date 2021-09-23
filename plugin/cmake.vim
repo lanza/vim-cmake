@@ -46,7 +46,7 @@ endif
 
 let g:cmake_tool = 'cmake'
 let g:cmake_window_id = -1
-let g:cmake_target = v:null
+let g:cmake_target_file = v:null
 let g:cmake_target_relative = v:null
 let g:cmake_target_name = v:null
 let g:current_target_args = ''
@@ -156,16 +156,16 @@ let g:cmake_cache_file = s:cache_file
 
 " this shouldn't be here...
 try
-  let g:cmake_target = s:cache_file[getcwd()].current_target
+  let g:cmake_target_file = s:cache_file[getcwd()].current_target
   let g:cmake_target_relative = s:cache_file[getcwd()].current_target_relative
   let g:cmake_target_name = s:cache_file[getcwd()].current_target_name
 catch /.*/
-  let g:cmake_target = v:null
+  let g:cmake_target_file = v:null
   let g:cmake_target_relative = v:null
   let g:cmake_target_name = v:null
 endtry
 try
-  let g:current_target_args = s:cache_file[getcwd()]["targets"][g:cmake_target].args
+  let g:current_target_args = s:cache_file[getcwd()]["targets"][g:cmake_target_file].args
 catch /.*/
   let g:current_target_args = ''
 endtry
@@ -332,7 +332,7 @@ endfunction
 let s:noop = function('s:noop_function')
 
 function! s:_do_build_current_target_with_completion(completion)
-  if g:cmake_target == v:null
+  if g:cmake_target_name == v:null
     echo "Please select a target first"
     call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
     return
@@ -348,7 +348,7 @@ function! s:_do_build_current_target_with_completion(completion)
     let l:tar = g:cmake_target
   endif
 
-  call s:_build_target_with_completion(l:tar, a:completion)
+  call s:_build_target_with_completion(g:cmake_target_name, a:completion)
 endfunction
 
 function! s:cmake_build_current_target_with_completion(completion)
@@ -444,8 +444,8 @@ function! s:cmake_build_all()
   if g:vim_cmake_build_tool ==? 'vsplit'
     " vsplit terminal implementation
     let l:command = 'cmake --build ' . s:get_build_dir()
-    if g:cmake_target
-      let l:command += ' --target ' . g:cmake_target
+    if g:cmake_target_file
+      let l:command += ' --target ' . g:cmake_target_file
     endif
     exe "vs | exe \"normal \<c-w>L\" | terminal " . l:command
   elseif g:vim_cmake_build_tool ==? 'Makeshift'
@@ -520,13 +520,13 @@ function! s:_run_current_target(job_id, exit_code, event)
   call s:close_last_window_if_open()
   if a:exit_code == 0
     call s:get_only_window()
-    exe "terminal \"" . g:cmake_target . "\" " . g:current_target_args
+    exe "terminal \"" . g:cmake_target_file . "\" " . g:current_target_args
   endif
   let g:vim_cmake_build_tool = g:vim_cmake_build_tool_old
 endf
 
 function! s:_do_run_current_target()
-  if g:cmake_target == ''
+  if g:cmake_target_file == ''
     call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
   endif
   if g:vim_cmake_build_tool != "vsplit"
@@ -549,12 +549,12 @@ function! s:update_target(target)
 
   let cache = s:get_cache_file()
   if !has_key(cache, getcwd())
-    let cache[getcwd()] = {'current_target': g:cmake_target, 'targets':{}}
+    let cache[getcwd()] = {'current_target': g:cmake_target_file, 'targets':{}}
     let cache[getcwd()] = {'current_target_relative': g:cmake_target_relative, 'targets':{}}
     let cache[getcwd()] = {'current_target_name': g:cmake_target_name, 'targets':{}}
   else
     let dir = cache[getcwd()]
-    let dir['current_target'] = g:cmake_target
+    let dir['current_target'] = g:cmake_target_file
     let dir['current_target_relative'] = g:cmake_target_relative
     let dir['current_target_name'] = g:cmake_target_name
   endif
@@ -562,7 +562,7 @@ function! s:update_target(target)
 endfunction
 
 function! s:dump_current_target()
-  echo "Current target set to '" . g:cmake_target . "' with args '" . g:current_target_args . "'"
+  echo "Current target set to '" . g:cmake_target_file . "' with args '" . g:current_target_args . "'"
 endfunction
 
 function! s:cmake_run_target_with_name(target)
@@ -604,8 +604,8 @@ function! s:start_gdb(job_id, exit_code, event)
   let l:data = s:get_cache_file()
   if has_key(l:data, getcwd())
     let l:dir = l:data[getcwd()]['targets']
-    if has_key(l:dir, s:get_build_dir() . '/' . g:cmake_target)
-      let l:target = l:dir[s:get_build_dir() . '/' . g:cmake_target]
+    if has_key(l:dir, s:get_build_dir() . '/' . g:cmake_target_file)
+      let l:target = l:dir[s:get_build_dir() . '/' . g:cmake_target_file]
       if has_key(l:target, 'breakpoints')
         let l:breakpoints = l:target['breakpoints']
         for b in l:breakpoints
@@ -626,7 +626,7 @@ function! s:start_gdb(job_id, exit_code, event)
   call s:close_last_buffer_if_open()
 
   let l:gdb_init_arg = ' -x /tmp/ginitvimcmake '
-  exec 'GdbStart gdb ' . g:cmake_target . l:gdb_init_arg . ' -- ' . g:current_target_args
+  exec 'GdbStart gdb ' . g:cmake_target_file . l:gdb_init_arg . ' -- ' . g:current_target_args
 endfunction
 
 function! s:start_lldb(job_id, exit_code, event)
@@ -637,8 +637,8 @@ function! s:start_lldb(job_id, exit_code, event)
   let l:data = s:get_cache_file()
   if has_key(l:data, getcwd())
     let l:dir = l:data[getcwd()]['targets']
-    if has_key(l:dir, s:get_build_dir() . '/' . g:cmake_target)
-      let l:target = l:dir[s:get_build_dir() . '/' . g:cmake_target]
+    if has_key(l:dir, s:get_build_dir() . '/' . g:cmake_target_file)
+      let l:target = l:dir[s:get_build_dir() . '/' . g:cmake_target_file]
       if has_key(l:target, 'breakpoints')
         let l:breakpoints = l:target['breakpoints']
         for b in l:breakpoints
@@ -663,7 +663,7 @@ function! s:start_lldb(job_id, exit_code, event)
   else
     let l:lldb_init_arg = ''
   endif
-  exec 'GdbStartLLDB lldb ' . g:cmake_target . l:lldb_init_arg . ' -- ' . g:current_target_args
+  exec 'GdbStartLLDB lldb ' . g:cmake_target_file . l:lldb_init_arg . ' -- ' . g:current_target_args
 endfunction
 
 function! s:start_nvim_dap_lldb_vscode(job_id, exit_code, event)
@@ -674,8 +674,8 @@ function! s:start_nvim_dap_lldb_vscode(job_id, exit_code, event)
   let l:data = s:get_cache_file()
   if has_key(l:data, getcwd())
     let l:dir = l:data[getcwd()]['targets']
-    if has_key(l:dir, s:get_build_dir() . '/' . g:cmake_target)
-      let l:target = l:dir[s:get_build_dir() . '/' . g:cmake_target]
+    if has_key(l:dir, s:get_build_dir() . '/' . g:cmake_target_file)
+      let l:target = l:dir[s:get_build_dir() . '/' . g:cmake_target_file]
       if has_key(l:target, 'breakpoints')
         let l:breakpoints = l:target['breakpoints']
         for b in l:breakpoints
@@ -699,7 +699,7 @@ function! s:start_nvim_dap_lldb_vscode(job_id, exit_code, event)
   else
     let l:lldb_init_arg = ''
   endif
-  exec 'DebugLldb ' . g:cmake_target . ' --lldbinit ' . l:lldb_init_arg . ' -- ' . g:current_target_args
+  exec 'DebugLldb ' . g:cmake_target_file . ' --lldbinit ' . l:lldb_init_arg . ' -- ' . g:current_target_args
   " exec 'DebugLldb ' . g:cmake_target . l:lldb_init_arg . ' -- ' . g:current_target_args
 endfunction
 
@@ -723,7 +723,7 @@ function! s:cmake_debug_current_target()
 endfunction
 
 function! s:_do_debug_current_target()
-  if g:cmake_target == v:null || get(g:tar_to_file, g:cmake_target_name, v:null) == v:null
+  if g:cmake_target_file == v:null || get(g:tar_to_file, g:cmake_target_name, v:null) == v:null
     echo "Please select a target first"
     call s:cmake_get_target_and_run_action(g:execs, 's:update_target')
     return
@@ -752,7 +752,7 @@ function! g:GetCMakeArgs()
 endfunction
 
 function! s:cmake_set_current_target_run_args(args)
-  if g:cmake_target ==? ''
+  if g:cmake_target_file ==? ''
     call s:cmake_target()
     return
   endif
@@ -779,10 +779,10 @@ endfunction
 
 function! s:get_target_cache()
   let c = s:get_targets_cache()
-  if !has_key(c, g:cmake_target)
+  if !has_key(c, g:cmake_target_file)
     let c[g:cmake_target] = {}
   endif
-  return c[g:cmake_target]
+  return c[g:cmake_target_file]
 endfunction
 
 function! s:cmake_create_file(...)
