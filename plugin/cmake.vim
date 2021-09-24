@@ -794,7 +794,7 @@ command! -nargs=* -complete=shellcmd CMakeSetCurrentTargetRunArgs call s:cmake_s
 command! -nargs=0 CMakeBuildCurrentTarget call s:cmake_build_current_target()
 
 command! -nargs=1 -complete=shellcmd CMakeClean call s:cmake_clean()
-command! -nargs=1 -complete=shellcmd CMakeBuildAll call s:cmake_build_all()
+command! -nargs=0 CMakeBuildAll call s:cmake_build_all()
 
 command! -nargs=* -complete=shellcmd CMakeCreateFile call s:cmake_create_file(<f-args>)
 
