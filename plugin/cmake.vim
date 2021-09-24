@@ -774,7 +774,7 @@ function! s:cmake_open_cache_file()
   exe 'e ' . s:get_build_dir() . '/CMakeCache.txt'
 endf
 
-command! -nargs=1 -complete=shellcmd CMakeOpenCacheFile call s:cmake_open_cache_file()
+command! -nargs=0 CMakeOpenCacheFile call s:cmake_open_cache_file()
 
 command! -nargs=* -complete=shellcmd CMakeSetCMakeArgs call s:cmake_set_cmake_args(<f-args>)
 command! -nargs=1 -complete=shellcmd CMakeSetBuildDir call s:cmake_set_build_dir(<f-args>)
