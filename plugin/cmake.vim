@@ -496,7 +496,7 @@ function! s:dump_current_target()
 endfunction
 
 function! s:cmake_run_target_with_name(target)
-  let s:cmake_target = s:get_build_dir() . '/' . g:tar_to_file[a:target]
+  let s:cmake_target_file = s:get_build_dir() . '/' . g:tar_to_file[a:target]
   try
     exec '!cmake --build ' . s:get_build_dir() . ' --target ' . a:target
   catch /.*/
@@ -622,7 +622,7 @@ function! s:start_nvim_dap_lldb_vscode(job_id, exit_code, event)
     let l:lldb_init_arg = ''
   endif
   exec 'DebugLldb ' . g:cmake_target_file . ' --lldbinit ' . l:lldb_init_arg . ' -- ' . g:current_target_args
-  " exec 'DebugLldb ' . g:cmake_target . l:lldb_init_arg . ' -- ' . g:current_target_args
+  " exec 'DebugLldb ' . g:cmake_target_file . l:lldb_init_arg . ' -- ' . g:current_target_args
 endfunction
 
 function! s:cmake_debug_current_target_nvim_dap_lldb_vscode()
@@ -675,7 +675,7 @@ endfunction
 
 function! s:cmake_set_current_target_run_args(args)
   if g:cmake_target_file ==? ''
-    call s:cmake_target()
+    call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
     return
   endif
   let s = a:args
@@ -702,7 +702,7 @@ endfunction
 function! s:get_target_cache()
   let c = s:get_targets_cache()
   if !has_key(c, g:cmake_target_file)
-    let c[g:cmake_target] = {}
+    let c[g:cmake_target_file] = {}
   endif
   return c[g:cmake_target_file]
 endfunction
