@@ -283,8 +283,16 @@ function! s:cmake_configure_and_generate_with_completion(completion)
 endf
 
 
-function! s:cmake_build_current_target()
+function! s:cmake_build_current_target(...)
+  if a:0 > 1
+    echom "CMakeBuildCurrentTarget takes one argument -- the dispatcher for the build"
+  end
+  let l:previous = g:vim_cmake_build_tool
+  if a:0 == 1
+    let g:vim_cmake_build_tool = a:1
+  endif
   call s:cmake_build_current_target_with_completion(s:noop)
+  let g:vim_cmake_build_tool = l:previous
 endf
 
 function! s:_do_build_current_target()
@@ -783,6 +791,10 @@ function! s:cmake_open_cache_file()
   exe 'e ' . s:get_build_dir() . '/CMakeCache.txt'
 endf
 
+function s:get_build_tools(...)
+  return ["vim-dispatch", "vsplit", "Makeshift", "make", "job"]
+endfunction
+
 command! -nargs=0 CMakeOpenCacheFile call s:cmake_open_cache_file()
 
 command! -nargs=* -complete=shellcmd CMakeSetCMakeArgs call s:cmake_set_cmake_args(<f-args>)
@@ -800,7 +812,7 @@ command! -nargs=0 CMakePickTarget call s:cmake_pick_target()
 command! -nargs=0 CMakePickExecutableTarget call s:cmake_pick_executable_target()
 command! -nargs=0 CMakeRunCurrentTarget call s:cmake_run_current_target()
 command! -nargs=* -complete=shellcmd CMakeSetCurrentTargetRunArgs call s:cmake_set_current_target_run_args(<q-args>)
-command! -nargs=0 CMakeBuildCurrentTarget call s:cmake_build_current_target()
+command! -nargs=? -complete=customlist,s:get_build_tools CMakeBuildCurrentTarget call s:cmake_build_current_target(<f-args>)
 
 command! -nargs=1 -complete=shellcmd CMakeClean call s:cmake_clean()
 command! -nargs=0 CMakeBuildAll call s:cmake_build_all()
