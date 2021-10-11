@@ -556,7 +556,9 @@ function! s:start_gdb(job_id, exit_code, event)
   call s:close_last_buffer_if_open()
 
   let l:gdb_init_arg = ' -x /tmp/gdbinitvimcmake '
-  exec 'GdbStart gdb -q ' . g:cmake_target_file . l:gdb_init_arg . ' -- ' . g:current_target_args
+  let l:exec = 'GdbStart gdb -q ' . l:gdb_init_arg . ' --args ' . g:cmake_target_file . " " . g:current_target_args
+  " echom l:exec
+  exec l:exec
 endfunction
 
 function! s:start_lldb(job_id, exit_code, event)
