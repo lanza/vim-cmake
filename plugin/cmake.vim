@@ -251,7 +251,7 @@ function! s:check_if_window_is_alive(win)
   else
     return v:false
   endif
-endf
+endfunction
 
 function! s:check_if_buffer_is_alive(buf)
   if index(nvim_list_bufs(), a:buf) > -1
@@ -259,7 +259,7 @@ function! s:check_if_buffer_is_alive(buf)
   else
     return v:false
   endif
-endf
+endfunction
 
 " close the current window and open a new one
 " This is a hack for now because I don't feel like figuring out how to clean a
@@ -270,7 +270,7 @@ function! s:get_only_window()
   exe "vs | wincmd L | enew"
   let g:cmake_last_window = nvim_get_current_win()
   let g:cmake_last_buffer = nvim_get_current_buf()
-endf
+endfunction
 
 function! s:cmake_configure_and_generate()
   call s:cmake_configure_and_generate_with_completion(s:noop)
@@ -292,7 +292,7 @@ function! s:cmake_configure_and_generate_with_completion(completion)
   " let l:link_cc_path = getcwd() . '/' . s:get_source_dir() . '/compile_commands.json'
   " let l:build_cc_path = getcwd() . '/' . s:get_build_dir() . '/compile_commands.json'
   " exe 'silent !test -L ' . l:link_cc_path . ' || test -e ' . l:link_cc_path . ' || ln -s ' . l:build_cc_path . .'
-endf
+endfunction
 
 
 function! s:cmake_build_current_target(...)
@@ -305,7 +305,7 @@ function! s:cmake_build_current_target(...)
   endif
   call s:cmake_build_current_target_with_completion(s:noop)
   let g:vim_cmake_build_tool = l:previous
-endf
+endfunction
 
 function! s:_do_build_current_target()
   call s:_do_build_current_target_with_completion(s:noop)
@@ -341,7 +341,7 @@ endfunction
 
 function! s:_build_target(target)
   call s:_build_target_with_completion(a:target, v:null)
-endf
+endfunction
 
 let g:cmake_last_window = v:null
 let g:cmake_last_buffer = v:null
