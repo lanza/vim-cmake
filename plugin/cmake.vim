@@ -331,6 +331,14 @@ function! s:_do_build_current_target_with_completion(completion)
   call s:_build_target_with_completion(g:cmake_target_name, a:completion)
 endfunction
 
+function! s:_do_build_all_with_completion(completion)
+  call s:_build_all_with_completion(a:completion)
+endfunction
+
+function! s:cmake_build_all_with_completion(completion)
+  call s:parse_codemodel_json_with_completion(function('s:compose_completions', [function('s:_do_build_all_with_completion'), a:completion]))
+endfunction
+
 function! s:cmake_build_current_target_with_completion(completion)
   call s:parse_codemodel_json_with_completion(function('s:compose_completions', [function('s:_do_build_current_target_with_completion'), a:completion]))
 endfunction
@@ -365,13 +373,16 @@ function! s:_build_target_with_completion(target, completion)
     call termopen(l:command, { "on_exit": a:completion })
   elseif g:vim_cmake_build_tool ==? 'vim-dispatch'
     let &makeprg = 'ninja -C ' . l:directory . ' ' . a:target
+    " completion not honored
     Make
   elseif g:vim_cmake_build_tool ==? 'Makeshift'
     let &makeprg = 'ninja ' . a:target
     let b:makeshift_root = l:directory
+    " completion not honored
     MakeshiftBuild
   elseif g:vim_cmake_build_tool ==? 'make'
     let &makeprg = 'ninja -C ' . l:directory . ' ' . a:target
+    " completion not honored
     make
   elseif g:vim_cmake_build_tool ==? 'job'
     let l:cmd = 'ninja -C ' . l:directory . ' ' . a:target
@@ -391,28 +402,29 @@ function! s:cmake_clean()
 endfunction
 
 function! s:cmake_build_all()
+  call s:cmake_build_all_with_completion(s:noop)
+endfunction
+
+function s:_build_all_with_completion(completion)
   if g:vim_cmake_build_tool ==? 'vsplit'
-    " vsplit terminal implementation
     let l:command = 'cmake --build ' . s:get_build_dir()
-    if g:cmake_target_file
-      let l:command += ' --target ' . g:cmake_target_file
-    endif
-    exe "vs | exe \"normal \<c-w>L\" | terminal " . l:command
+    call s:get_only_window()
+    call termopen(l:command, { "on_exit": a:completion })
   elseif g:vim_cmake_build_tool ==? 'Makeshift'
-    " Makeshift implementation
     let &makeprg = 'ninja'
     let cwd = getcwd()
     let b:makeshift_root = cwd . '/' . s:get_build_dir()
+    " completion not honored
     MakeshiftBuild
   elseif g:vim_cmake_build_tool ==? 'vim-dispatch'
-    " vim-dispatch implementation
     let cwd = getcwd()
     let &makeprg = 'ninja -C ' . cwd . '/' . s:get_build_dir()
+    " completion not honored
     Make
   elseif g:vim_cmake_build_tool ==? 'make'
-    " make implementation
     let cwd = getcwd()
     let &makeprg = 'ninja -C ' . cwd . '/' . s:get_build_dir()
+    " completion not honored
     make
   else
     echo 'Your g:vim_cmake_build_tool value is invalid. Please set it to either vsplit, Makeshift, vim-dispatch or make.'
