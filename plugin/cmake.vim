@@ -51,6 +51,10 @@ let g:cmake_target_name = v:null
 let g:current_target_args = ''
 let g:cmake_arguments = []
 
+if !exists("g:cmake_template_file")
+  let g:cmake_template_file = expand("%:p:h:h" . "/CMakeLists.txt")
+end
+
 function! s:get_cache_file()
   if exists('g:cmake_cache_file')
     return g:cmake_cache_file
@@ -274,6 +278,14 @@ endfunction
 
 function! s:cmake_configure_and_generate_with_completion(completion)
   let l:command = g:cmake_tool . " " . s:get_cmake_argument_string()
+  if !filereadable(s:get_source_dir() . "/CMakeLists.txt")
+    if exists("g:cmake_template_file")
+      silent exec "! cp " . g:cmake_template_file . " " . s:get_source_dir() . "/CMakeLists.txt"
+    else
+      echom "Could not find a CMakeLists at directory " . s:get_source_dir()
+      return
+    endif
+  endif
   call s:get_only_window()
   echo l:command
   call termopen(split(l:command), {'on_exit': a:completion})
