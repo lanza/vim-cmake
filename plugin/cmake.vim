@@ -318,7 +318,6 @@ let s:noop = function('s:noop_function')
 
 function! s:_do_build_current_target_with_completion(completion)
   if g:cmake_target_name == v:null
-    echo "Please select a target first"
     call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
     return
   endif
@@ -470,9 +469,18 @@ function! s:_run_current_target(job_id, exit_code, event)
   let g:vim_cmake_build_tool = g:vim_cmake_build_tool_old
 endf
 
+function! s:_update_target_and_run(target)
+  " echom "_update_target_and_run(" . a:target . ")"
+  call s:update_target(a:target)
+  call s:_do_run_current_target()
+endfunction
+
 function! s:_do_run_current_target()
-  if g:cmake_target_file == ''
-    call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
+  " echom "_do_run_current_target() with g:cmake_target_file = " . g:cmake_target_file
+  if g:cmake_target_file == '' || g:cmake_target_file == v:null
+    " because vimscript doesn't have asynch the below just recursively calls this
+    call s:cmake_get_target_and_run_action(g:execs, 's:_update_target_and_run')
+    return
   endif
   if g:vim_cmake_build_tool != "vsplit"
     let g:vim_cmake_build_tool_old = g:vim_cmake_build_tool
@@ -484,6 +492,7 @@ function! s:_do_run_current_target()
 endfunction
 
 function! s:cmake_run_current_target()
+  " echom "s:cmake_run_current_target()"
   call s:parse_codemodel_json_with_completion(function("s:_do_run_current_target"))
 endfunction
 
@@ -528,14 +537,20 @@ function! s:cmake_run_target_with_name(target)
 endfunction
 
 function! s:cmake_get_target_and_run_action(target_list, action)
+  " echom "s:cmake_get_target_and_run_action([" . join(a:target_list, ",")  . "], " . a:action . ")"
   let l:names = []
   for target in a:target_list
     let l:name = keys(target)[0]
     call add(l:names, l:name)
   endfor
 
-  set makeprg=ninja
-  call fzf#run({'source': l:names, 'sink': function(a:action), 'down': len(l:names) + 2})
+  if len(l:names) == 1
+    " this has to be unwrapped because a:action is a string
+    exec "call " . a:action . "(\"" . l:names[0] . "\")"
+  else
+    set makeprg=ninja
+    call fzf#run({'source': l:names, 'sink': function(a:action), 'down': len(l:names) + 2})
+  endif
 endfunction
 
 function! s:start_gdb(job_id, exit_code, event)
@@ -668,9 +683,7 @@ endfunction
 
 function! s:_do_debug_current_target()
   if g:cmake_target_file == v:null || get(g:tar_to_file, g:cmake_target_name, v:null) == v:null
-    echo "Please select a target first"
     call s:cmake_get_target_and_run_action(g:execs, 's:update_target')
-    return
   endif
 
   if exists('g:vim_cmake_debugger')
