@@ -316,9 +316,15 @@ endfunction
 
 let s:noop = function('s:noop_function')
 
+function! s:_update_target_and_build(target)
+  call s:update_target(a:target)
+  call s:_do_build_current_target()
+endfunction
+
+
 function! s:_do_build_current_target_with_completion(completion)
-  if g:cmake_target_name == v:null
-    call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
+  if g:cmake_target_name == "" || g:cmake_target_name == v:null
+    call s:cmake_get_target_and_run_action(g:tars, 's:_update_target_and_build')
     return
   endif
 
