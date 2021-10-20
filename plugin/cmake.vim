@@ -277,7 +277,6 @@ function! s:cmake_configure_and_generate()
 endfunction
 
 function! s:cmake_configure_and_generate_with_completion(completion)
-  let l:command = g:cmake_tool . " " . s:get_cmake_argument_string()
   if !filereadable(s:get_source_dir() . "/CMakeLists.txt")
     if exists("g:cmake_template_file")
       silent exec "! cp " . g:cmake_template_file . " " . s:get_source_dir() . "/CMakeLists.txt"
@@ -286,8 +285,9 @@ function! s:cmake_configure_and_generate_with_completion(completion)
       return
     endif
   endif
-  call s:get_only_window()
+  let l:command = g:cmake_tool . " " . s:get_cmake_argument_string()
   echo l:command
+  call s:get_only_window()
   call termopen(split(l:command), {'on_exit': a:completion})
   " let l:link_cc_path = getcwd() . '/' . s:get_source_dir() . '/compile_commands.json'
   " let l:build_cc_path = getcwd() . '/' . s:get_build_dir() . '/compile_commands.json'
