@@ -533,6 +533,8 @@ function! s:update_target(target)
     let cache[getcwd()] = {'current_target_file': g:cmake_target_file, 'targets':{}}
     let cache[getcwd()] = {'current_target_relative': g:cmake_target_relative, 'targets':{}}
     let cache[getcwd()] = {'current_target_name': g:cmake_target_name, 'targets':{}}
+
+    let cache[getcwd()]["targets"] = {}
   else
     let dir = cache[getcwd()]
     let dir['current_target_file'] = g:cmake_target_file
