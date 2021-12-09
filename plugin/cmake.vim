@@ -628,7 +628,12 @@ function! s:start_lldb(job_id, exit_code, event)
   if a:exit_code != 0
     return
   endif
-  let l:commands = ["breakpoint set --func-regex '^main$'", 'r']
+  let l:commands = []
+
+  if s:should_break_at_main()
+    call add(l:commands, "breakpoint set --func-regex '^main$'")
+  endif
+
   let l:data = s:get_cache_file()
   if has_key(l:data, getcwd())
     let l:dir = l:data[getcwd()]['targets']
@@ -647,6 +652,8 @@ function! s:start_lldb(job_id, exit_code, event)
     endif
   endif
 
+  call add(l:commands, 'r')
+
   let l:init_file = '/tmp/lldbinitvimcmake'
   let l:f = writefile(l:commands, l:init_file)
 
@@ -659,6 +666,24 @@ function! s:start_lldb(job_id, exit_code, event)
     let l:lldb_init_arg = ''
   endif
   exec 'GdbStartLLDB lldb ' . g:cmake_target_file . l:lldb_init_arg . ' -- ' . g:current_target_args
+endfunction
+
+function! s:toggle_break_at_main()
+  if filereadable($HOME . ".config/vim_cmake/dont_break_at_main")
+    silent !rm ~/.config/vim_cmake/dont_break_at_main
+  else
+    if !isdirectory($HOME . "/.config")
+      silent !mkdir ~/.config
+    end
+    if !isdirectory($HOME . "/.config/vim_cmake")
+      silent !mkdir ~/.config/vim_cmake
+    end
+    silent !touch ~/.config/vim_cmake/dont_break_at_main
+  endif
+endfunction
+
+function! s:should_break_at_main()
+  return !filereadable($HOME . "/.config/vim_cmake/dont_break_at_main")
 endfunction
 
 function! s:start_nvim_dap_lldb_vscode(job_id, exit_code, event)
@@ -879,6 +904,7 @@ command! -nargs=? -complete=customlist,s:get_build_tools CMakeBuildCurrentTarget
 command! -nargs=1 -complete=shellcmd CMakeClean call s:cmake_clean()
 command! -nargs=0 CMakeBuildAll call s:cmake_build_all()
 
+command! -nargs=0 CMakeToggleBreakAtMain call s:toggle_break_at_main()
 command! -nargs=* -complete=shellcmd CMakeCreateFile call s:cmake_create_file(<f-args>)
 
 command! -nargs=1 -complete=shellcmd CMakeCloseWindow call s:cmake_close_windows()
