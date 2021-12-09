@@ -163,7 +163,7 @@ let g:cmake_cache_file = s:get_cache_file()
 
 " this shouldn't be here...
 try
-  let g:cmake_target_file = g:cmake_cache_file[getcwd()].current_target
+  let g:cmake_target_file = g:cmake_cache_file[getcwd()].current_target_file
   let g:cmake_target_relative = g:cmake_cache_file[getcwd()].current_target_relative
   let g:cmake_target_name = g:cmake_cache_file[getcwd()].current_target_name
 catch /.*/
@@ -530,12 +530,12 @@ function! s:update_target(target)
 
   let cache = s:get_cache_file()
   if !has_key(cache, getcwd())
-    let cache[getcwd()] = {'current_target': g:cmake_target_file, 'targets':{}}
+    let cache[getcwd()] = {'current_target_file': g:cmake_target_file, 'targets':{}}
     let cache[getcwd()] = {'current_target_relative': g:cmake_target_relative, 'targets':{}}
     let cache[getcwd()] = {'current_target_name': g:cmake_target_name, 'targets':{}}
   else
     let dir = cache[getcwd()]
-    let dir['current_target'] = g:cmake_target_file
+    let dir['current_target_file'] = g:cmake_target_file
     let dir['current_target_relative'] = g:cmake_target_relative
     let dir['current_target_name'] = g:cmake_target_name
   endif
