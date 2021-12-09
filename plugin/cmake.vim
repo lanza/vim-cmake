@@ -589,6 +589,7 @@ function! s:cmake_get_target_and_run_action(target_list, action)
   endif
 endfunction
 
+" TODO: Fix this breakpoint handling
 function! s:start_gdb(job_id, exit_code, event)
   if a:exit_code != 0
     return
@@ -636,20 +637,15 @@ function! s:start_lldb(job_id, exit_code, event)
 
   let l:data = s:get_cache_file()
   if has_key(l:data, getcwd())
-    let l:dir = l:data[getcwd()]['targets']
-    if has_key(l:dir, s:get_build_dir() . '/' . g:cmake_target_file)
-      let l:target = l:dir[s:get_build_dir() . '/' . g:cmake_target_file]
-      if has_key(l:target, 'breakpoints')
-        let l:breakpoints = l:target['breakpoints']
-        for b in l:breakpoints
-          if b['enabled']
-            let break = 'b ' . b['text']
-            call add(l:commands, break)
-          endif
-        endfor
-        call add(l:commands, 'r')
+    let l:breakpoints = l:data[getcwd()]["targets"][g:cmake_target_file]["breakpoints"]
+    for b in keys(l:breakpoints)
+      echom b
+      let l:bp = l:breakpoints[b]
+      if l:bp['enabled']
+        let break = 'b ' . l:bp['text']
+        call add(l:commands, break)
       endif
-    endif
+    endfor
   endif
 
   call add(l:commands, 'r')
@@ -666,6 +662,18 @@ function! s:start_lldb(job_id, exit_code, event)
     let l:lldb_init_arg = ''
   endif
   exec 'GdbStartLLDB lldb ' . g:cmake_target_file . l:lldb_init_arg . ' -- ' . g:current_target_args
+endfunction
+
+function! s:toggle_file_line_column_breakpoint()
+  let l:curpos = getcurpos()
+  let l:line_number = l:curpos[1]
+  let l:column_number = l:curpos[2]
+
+  let l:filename = expand("#" . bufnr() . ":p")
+
+  let l:break_string = l:filename . ":" . l:line_number . ":" . l:column_number
+
+  call s:toggle_breakpoint(l:break_string)
 endfunction
 
 function! s:toggle_break_at_main()
@@ -686,6 +694,32 @@ function! s:should_break_at_main()
   return !filereadable($HOME . "/.config/vim_cmake/dont_break_at_main")
 endfunction
 
+function! s:toggle_file_line_breakpoint()
+  let l:curpos = getcurpos()
+  let l:line_number = l:curpos[1]
+
+  let l:filename = expand("#" . bufnr() . ":p")
+
+  let l:break_string = l:filename . ":" . l:line_number
+
+  call s:toggle_breakpoint(l:break_string)
+endfunction
+
+function! s:toggle_breakpoint(break_string)
+  let l:data = s:get_cache_file()
+  let l:breakpoints = l:data[getcwd()]['targets'][g:cmake_target_file]["breakpoints"]
+  if has_key(l:breakpoints, a:break_string)
+    let l:breakpoints[a:break_string]["enabled"] = !l:breakpoints[a:break_string]["enabled"]
+  else
+    let l:breakpoints[a:break_string] = {
+        \ "text": a:break_string,
+        \ "enabled": v:true
+        \ }
+  endif
+  call s:save_cache_file()
+endfunction
+
+" TODO: Fix this breakpoint handling
 function! s:start_nvim_dap_lldb_vscode(job_id, exit_code, event)
   if a:exit_code != 0
     return
@@ -904,6 +938,8 @@ command! -nargs=? -complete=customlist,s:get_build_tools CMakeBuildCurrentTarget
 command! -nargs=1 -complete=shellcmd CMakeClean call s:cmake_clean()
 command! -nargs=0 CMakeBuildAll call s:cmake_build_all()
 
+command! -nargs=0 CMakeToggleFileLineColumnBreakpoint call s:toggle_file_line_column_breakpoint()
+command! -nargs=0 CMakeToggleFileLineBreakpoint call s:toggle_file_line_breakpoint()
 command! -nargs=0 CMakeToggleBreakAtMain call s:toggle_break_at_main()
 command! -nargs=* -complete=shellcmd CMakeCreateFile call s:cmake_create_file(<f-args>)
 
