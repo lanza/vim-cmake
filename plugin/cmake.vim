@@ -71,6 +71,10 @@ function! s:get_cache_file()
   return g:cmake_cache_file
 endfunction
 
+function! g:CMake_get_cache_file()
+  return s:get_cache_file()
+endfunction
+
 
 " this needs to be wrapped due to the need to use on_exit to pipeline the config
 function! s:_do_parse_codemodel_json()
