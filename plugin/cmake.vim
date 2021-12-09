@@ -541,6 +541,18 @@ function! s:update_target(target)
     let dir['current_target_relative'] = g:cmake_target_relative
     let dir['current_target_name'] = g:cmake_target_name
   endif
+
+  if !has_key(cache[getcwd()]["targets"], g:cmake_target_file)
+    let l:target = {
+        \ "cmake_target_file": g:cmake_target_file,
+        \ 'current_target_relative': g:cmake_target_relative,
+        \ 'current_target_name': g:cmake_target_name,
+        \ "breakpoints": {},
+        \ "args": ""
+        \ }
+    let cache[getcwd()]["targets"][g:cmake_target_file] = l:target
+  endif
+
   call s:update_cache_file()
 endfunction
 
