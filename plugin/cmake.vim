@@ -524,8 +524,8 @@ function! s:update_target(target)
     let g:cmake_target_relative = g:tar_to_file[a:target]
     let g:cmake_target_file = s:get_build_dir() . '/' . g:tar_to_file[a:target]
   else
-    let g:cmake_target_relative = ""
-    let g:cmake_target_file = ""
+    let g:cmake_target_relative = v:null
+    let g:cmake_target_file = v:null
   end
 
   let cache = s:get_cache_file()
