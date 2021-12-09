@@ -705,6 +705,19 @@ function! s:toggle_file_line_breakpoint()
   call s:toggle_breakpoint(l:break_string)
 endfunction
 
+function! g:CMake_list_breakpoints()
+  let args = []
+  let l:bps = s:get_cache_file()[getcwd()]["targets"][g:cmake_target_file]["breakpoints"]
+  for bp in keys(l:bps)
+    let l:b = l:bps[bp]
+    if l:b["enabled"]
+      call add(args, bp)
+    endif
+  endfor
+
+  echo join(args, "\n")
+endfunction
+
 function! s:toggle_breakpoint(break_string)
   let l:data = s:get_cache_file()
   let l:breakpoints = l:data[getcwd()]['targets'][g:cmake_target_file]["breakpoints"]
@@ -940,7 +953,9 @@ command! -nargs=0 CMakeBuildAll call s:cmake_build_all()
 
 command! -nargs=0 CMakeToggleFileLineColumnBreakpoint call s:toggle_file_line_column_breakpoint()
 command! -nargs=0 CMakeToggleFileLineBreakpoint call s:toggle_file_line_breakpoint()
+command! -nargs=0 CMakeListBreakpoints call g:CMake_list_breakpoints()
 command! -nargs=0 CMakeToggleBreakAtMain call s:toggle_break_at_main()
+
 command! -nargs=* -complete=shellcmd CMakeCreateFile call s:cmake_create_file(<f-args>)
 
 command! -nargs=1 -complete=shellcmd CMakeCloseWindow call s:cmake_close_windows()
