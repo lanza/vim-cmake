@@ -930,6 +930,13 @@ function s:get_build_tools(...)
   return ["vim-dispatch", "vsplit", "Makeshift", "make", "job"]
 endfunction
 
+function s:run_lit_on_file()
+  let l:full_path = expand("%:p")
+  let l:lit_path = g:cmake_build_dir . "/bin/llvm-lit"
+  call s:get_only_window()
+  call termopen([l:lit_path, l:full_path])
+endfunction
+
 command! -nargs=0 CMakeOpenCacheFile call s:cmake_open_cache_file()
 
 command! -nargs=* -complete=shellcmd CMakeSetCMakeArgs call s:cmake_set_cmake_args(<f-args>)
@@ -961,3 +968,4 @@ command! -nargs=* -complete=shellcmd CMakeCreateFile call s:cmake_create_file(<f
 
 command! -nargs=1 -complete=shellcmd CMakeCloseWindow call s:cmake_close_windows()
 
+command! -nargs=0 CMakeRunLitOnFile call s:run_lit_on_file()
