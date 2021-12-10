@@ -882,6 +882,7 @@ function! s:cmake_set_source_dir(...)
   let dir = a:1
   let c = s:get_cwd_cache()
   let c['source_dir'] = dir
+  let g:cmake_source_dir = dir
   call s:update_cache_file()
 endfunction
 
