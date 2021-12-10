@@ -162,15 +162,12 @@ endfunction
 let g:cmake_cache_file = s:get_cache_file()
 
 " this shouldn't be here...
-try
-  let g:cmake_target_file = g:cmake_cache_file[getcwd()].current_target_file
-  let g:cmake_target_relative = g:cmake_cache_file[getcwd()].current_target_relative
-  let g:cmake_target_name = g:cmake_cache_file[getcwd()].current_target_name
-catch /.*/
-  let g:cmake_target_file = v:null
-  let g:cmake_target_relative = v:null
-  let g:cmake_target_name = v:null
-endtry
+let s:cwd = get(g:cmake_cache_file, getcwd(), {})
+
+let g:cmake_target_file = get(s:cwd, "current_target_file", v:null)
+let g:cmake_target_relative = get(s:cwd, "current_target_relative", v:null)
+let g:cmake_target_name = get(s:cwd, "current_target_name", v:null)
+
 try
   let g:current_target_args = g:cmake_cache_file[getcwd()]["targets"][g:cmake_target_file].args
 catch /.*/
