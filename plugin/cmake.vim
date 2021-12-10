@@ -930,11 +930,15 @@ function s:get_build_tools(...)
   return ["vim-dispatch", "vsplit", "Makeshift", "make", "job"]
 endfunction
 
+if !exists("g:cmake_extra_lit_args")
+  let g:cmake_extra_lit_args = "-sv"
+endif
+
 function s:run_lit_on_file()
   let l:full_path = expand("%:p")
   let l:lit_path = g:cmake_build_dir . "/bin/llvm-lit"
   call s:get_only_window()
-  call termopen([l:lit_path, l:full_path])
+  call termopen([l:lit_path, g:cmake_extra_lit_args, l:full_path])
 endfunction
 
 command! -nargs=0 CMakeOpenCacheFile call s:cmake_open_cache_file()
