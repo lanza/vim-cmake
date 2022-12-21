@@ -931,7 +931,7 @@ function s:get_build_tools(...)
 endfunction
 
 if !exists("g:cmake_extra_lit_args")
-  let g:cmake_extra_lit_args = "-sv"
+  let g:cmake_extra_lit_args = "-a"
 endif
 
 function s:run_lit_on_file()
