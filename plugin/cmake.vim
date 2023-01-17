@@ -936,7 +936,11 @@ endif
 
 function s:run_lit_on_file()
   let l:full_path = expand("%:p")
-  let l:lit_path = g:cmake_build_dir . "/bin/llvm-lit"
+  if filereadable(g:cmake_build_dir . "/bin/llvm-lit")
+    let l:lit_path = g:cmake_build_dir . "/bin/llvm-lit"
+  else
+    let l:lit_path = "llvm-lit"
+  endif
   call s:get_only_window()
   call termopen([l:lit_path, g:cmake_extra_lit_args, l:full_path])
 endfunction
