@@ -977,3 +977,8 @@ command! -nargs=* -complete=shellcmd CMakeCreateFile call s:cmake_create_file(<f
 command! -nargs=1 -complete=shellcmd CMakeCloseWindow call s:cmake_close_windows()
 
 command! -nargs=0 CMakeRunLitOnFile call s:run_lit_on_file()
+
+command! CMakeEditCurrentTargetRunArgs call feedkeys(":CMakeSetCurrentTargetRunArgs " . eval("g:GetCMakeCurrentTargetRunArgs()"))
+command! CMakeEditCMakeArgs call feedkeys(":CMakeSetCMakeArgs " . eval("join(g:GetCMakeArgs(), ' ')"))
+command! CMakeEditBuildDir call feedkeys(":CMakeSetBuildDir " . eval("g:GetCMakeBuildDir()"))
+command! CMakeEditSourceDir call feedkeys(":CMakeSetSourceDir " . eval("g:GetCMakeSourceDir()"))
