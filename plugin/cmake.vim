@@ -632,7 +632,7 @@ function! s:start_lldb(job_id, exit_code, event)
   let l:commands = []
 
   if s:should_break_at_main()
-    call add(l:commands, "breakpoint set --name main")
+    call add(l:commands, "breakpoint set --func-regex '^main$'")
   endif
 
   let l:data = s:get_cache_file()
@@ -737,7 +737,7 @@ function! s:start_nvim_dap_lldb_vscode(job_id, exit_code, event)
   if a:exit_code != 0
     return
   endif
-  let l:commands = ["breakpoint set --name main", 'r']
+  let l:commands = ["breakpoint set --func-regex '^main$'", 'r']
   let l:data = s:get_cache_file()
   if has_key(l:data, getcwd())
     let l:dir = l:data[getcwd()]['targets']
