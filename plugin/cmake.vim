@@ -863,7 +863,7 @@ function g:GetCMakeArgs()
 endfunction
 
 function s:cmake_set_current_target_run_args(args)
-  if s:get_cmake_target_file() ==? ''
+  if s:get_cmake_target_file() ==? v:null
     call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
     return
   endif
