@@ -223,6 +223,7 @@ function! s:initialize_cache_file()
   call s:set_if_empty(l:dco, "current_target_args", '')
   call s:set_if_empty(l:dco, "cmake_arguments", [])
   call s:set_if_empty(l:dco, "build_dir", "build")
+  call s:set_if_empty(l:dco, "targets", {})
 endfunction
 
 function! g:CMake_get_cache_file()
@@ -864,13 +865,13 @@ endfunction
 
 function! s:cmake_set_cmake_args(...)
   call s:set_cmake_arguments(a:000)
-  let c = s:get_cwd_cache()
+  let c = s:get_cmake_dir_cache_object()
   let c['cmake_args'] = a:000
   call s:update_cache_file()
 endfunction
 
 function! g:GetCMakeArgs()
-  return get(s:get_cwd_cache(), "cmake_args", [])
+  return get(s:get_cmake_dir_cache_object(), "cmake_args", [])
 endfunction
 
 function! s:cmake_set_current_target_run_args(args)
@@ -892,7 +893,7 @@ function! g:GetCMakeCurrentTargetRunArgs()
 endfunction
 
 function! s:get_targets_cache()
-  let c = s:get_cwd_cache()
+  let c = s:get_cmake_dir_cache_object()
   if !has_key(c, 'targets')
     let c['targets'] = {}
   endif
@@ -928,7 +929,7 @@ endfunction
 
 function! s:cmake_update_build_dir(...)
   let dir = a:1
-  let c = s:get_cwd_cache() " don't touch
+  let c = s:get_cmake_dir_cache_object() " don't touch
   let c['build_dir'] = dir
   call s:set_cmake_build_dir(dir)
   call s:update_cache_file()
@@ -936,21 +937,17 @@ endfunction
 
 function! s:cmake_update_source_dir(...)
   let dir = a:1
-  let c = s:get_cwd_cache() " don't touch
+  let c = s:get_cmake_dir_cache_object() " don't touch
   let c['source_dir'] = dir
   call s:update_cache_file()
 endfunction
 
-function! s:get_cwd_cache()
-  let c = s:get_cmake_cache_file()
-  if !has_key(c, getcwd())
-    let c[getcwd()] = {'targets' : {}}
-  endif
-  return c[getcwd()]
+function! s:get_cmake_dir_cache_object()
+  return g:state.dir_cache_object
 endfunction
 
 function! s:get_source_dir()
-  let c = s:get_cwd_cache()
+  let c = s:get_cmake_dir_cache_object()
   if !has_key(c, 'source_dir')
     let c['source_dir'] = '.'
   endif
@@ -966,7 +963,7 @@ function g:GetCMakeBuildDir()
 endfunction
 
 function! s:read_build_dir()
-  let c = s:get_cwd_cache()
+  let c = s:get_cmake_dir_cache_object()
   if !has_key(c, 'build_dir')
     if exists("g:cmake_default_build_dir")
       let c['build_dir'] = g:cmake_default_build_dir
