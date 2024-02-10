@@ -42,7 +42,9 @@ function! s:encode_json(object) abort
   endif
 endfunction
 
-let g:cmake_tool = 'cmake'
+let g:cmake_state = {
+    \ "cmake_tool": "cmake",
+    \ }
 
 function s:get_cmake_target_file()
   return g:cmake_target_file
@@ -334,7 +336,7 @@ function! s:cmake_configure_and_generate_with_completion(completion)
       return
     endif
   endif
-  let l:command = g:cmake_tool . " " . s:get_cmake_argument_string()
+  let l:command = g:state.cmake_tool . " " . s:get_cmake_argument_string()
   echo l:command
   call s:get_only_window()
   call termopen(split(l:command), {'on_exit': a:completion})
