@@ -46,6 +46,7 @@ function! s:set_if_empty(object, key, val)
   if !has_key(a:object, a:key)
     let a:object[a:key] = a:val
   endif
+  return a:object[a:key]
 endfunction
 
 let g:state = {
@@ -62,27 +63,35 @@ function s:get_cmake_target_file()
 endfunction
 function s:set_cmake_target_file(value)
   let g:state.dir_cache_object.current_target_file = a:value
+  let g:state.current_target_cache_object = s:set_if_empty(g:state.dir_cache_object.targets, a:value, {})
 endfunction
 
 function s:get_cmake_target_relative()
-  return g:state.dir_cache_object.current_target_relative
+  return g:state.current_a.current_target_relative.current_target_relative
 endfunction
 function s:set_cmake_target_relative(value)
-  let g:state.dir_cache_object.current_target_relative = a:value
+  let g:state.current_target_cache_object.current_target_relative = a:value
 endfunction
 
 function s:get_cmake_target_name()
-  return g:state.dir_cache_object.current_target_name
+  return g:state.current_target_cache_object.current_target_name
 endfunction
 function s:set_cmake_target_name(value)
-  let g:state.dir_cache_object.current_target_name = a:value
+  let g:state.current_target_cache_object.current_target_name = a:value
 endfunction
 
-function! s:get_current_target_args()
-  return g:state.dir_cache_object.current_target_args
+function! s:set_cmake_target_args(value)
+  let g:state.current_target_cache_object.args = a:value
 endfunction
-function! s:set_current_target_args(value)
-  let g:state.dir_cache_object.current_target_args = a:value
+function! s:get_cmake_target_args()
+  return g:state.current_target_cache_object.args
+endfunction
+
+function! s:set_cmake_target_breakpoints(value)
+  let g:state.current_target_cache_object.breakpoints = a:value
+endfunction
+function! s:get_cmake_target_breakpoints()
+  return g:state.current_target_cache_object.breakpoints
 endfunction
 
 function s:set_cmake_arguments(value)
@@ -234,14 +243,18 @@ function! s:initialize_cache_file()
 
   " initialize directory cache object
   let l:dco = g:state.dir_cache_object
-  call s:set_if_empty(l:dco, "current_target_file", v:null)
-  call s:set_if_empty(l:dco, "current_target_relative", v:null)
-  call s:set_if_empty(l:dco, "current_target_name", v:null)
-  call s:set_if_empty(l:dco, "current_target_args", '')
   call s:set_if_empty(l:dco, "cmake_arguments", [])
   call s:set_if_empty(l:dco, "build_dir", g:state.default_build_dir)
   call s:set_if_empty(l:dco, "source_dir", ".")
+
   call s:set_if_empty(l:dco, "targets", {})
+  call s:set_if_empty(l:dco, "current_target_file", v:null)
+
+  if l:dco.current_target_file
+    let g:state.current_target_cache_object = l:dco.current_target_file
+  else
+    let g:state.current_target_cache_object = v:null
+  endif
 endfunction
 
 function! g:CMake_get_cache_file()
@@ -249,17 +262,6 @@ function! g:CMake_get_cache_file()
 endfunction
 
 call s:initialize_cache_file()
-
-try
-  call s:set_current_target_args(s:get_cmake_cache_file()[getcwd()]["targets"][s:get_cmake_target_file()].args)
-catch /.*/
-  call s:set_current_target_args('')
-endtry
-try
-  call s:set_cmake_arguments(s:get_cmake_cache_file()[getcwd()]["cmake_args"])
-catch /.*/
-  call s:set_cmake_arguments([])
-endtry
 
 function! s:make_query_files()
   let l:build_dir = s:get_cmake_build_dir()
@@ -404,7 +406,7 @@ endfunction
 
 
 function! s:_do_build_current_target_with_completion(completion)
-  if s:get_cmake_target_name() == "" || s:get_cmake_target_name() == v:null
+  if s:get_cmake_target_file() == v:null
     call s:cmake_get_target_and_run_action(g:tars, 's:_update_target_and_build')
     return
   endif
@@ -559,7 +561,7 @@ function! s:_run_current_target(job_id, exit_code, event)
   call s:close_last_window_if_open()
   if a:exit_code == 0
     call s:get_only_window()
-    exe "terminal \"" . s:get_cmake_target_file() . "\" " . s:get_current_target_args()
+    exe "terminal \"" . s:get_cmake_target_file() . "\" " . s:get_cmake_target_args()
   endif
   let g:vim_cmake_build_tool = g:vim_cmake_build_tool_old
 endf
@@ -592,45 +594,17 @@ function! s:cmake_run_current_target()
 endfunction
 
 function! s:update_target(target)
+  call s:set_cmake_target_file(s:get_cmake_build_dir() . '/' . g:tar_to_file[a:target])
+  call s:set_cmake_target_relative(g:tar_to_file[a:target])
   call s:set_cmake_target_name(a:target)
-  if has_key(g:tar_to_file, a:target)
-    call s:set_cmake_target_relative(g:tar_to_file[a:target])
-    call s:set_cmake_target_file(s:get_cmake_build_dir() . '/' . g:tar_to_file[a:target])
-  else
-    call s:set_cmake_target_relative(v:null)
-    call s:set_cmake_target_file(v:null)
-  end
-
-  let cache = s:get_cmake_cache_file()
-  if !has_key(cache, getcwd())
-    let cache[getcwd()] = {'current_target_file': s:get_cmake_target_file(), 'targets':{}}
-    let cache[getcwd()] = {'current_target_relative': s:get_cmake_target_relative(), 'targets':{}}
-    let cache[getcwd()] = {'current_target_name': s:get_cmake_target_name(), 'targets':{}}
-
-    let cache[getcwd()]["targets"] = {}
-  else
-    let dir = cache[getcwd()]
-    let dir['current_target_file'] = s:get_cmake_target_file()
-    let dir['current_target_relative'] = s:get_cmake_target_relative()
-    let dir['current_target_name'] = s:get_cmake_target_name()
-  endif
-
-  if !has_key(cache[getcwd()]["targets"], s:get_cmake_target_file())
-    let l:target = {
-        \ "cmake_target_file": s:get_cmake_target_file(),
-        \ 'current_target_relative': s:get_cmake_target_relative(),
-        \ 'current_target_name': s:get_cmake_target_name(),
-        \ "breakpoints": {},
-        \ "args": ""
-        \ }
-    let cache[getcwd()]["targets"][s:get_cmake_target_file()] = l:target
-  endif
+  call s:set_cmake_target_args("")
+  call s:set_cmake_target_breakpoints({})
 
   call s:write_cache_file()
 endfunction
 
 function! s:dump_current_target()
-  echo "Current target set to '" . s:get_cmake_target_file() . "' with args '" . s:get_current_target_args() . "'"
+  echo "Current target set to '" . s:get_cmake_target_file() . "' with args '" . s:get_cmake_target_args() . "'"
 endfunction
 
 function! s:cmake_run_target_with_name(target)
@@ -693,7 +667,7 @@ function! s:start_gdb(job_id, exit_code, event)
   call s:close_last_buffer_if_open()
 
   let l:gdb_init_arg = ' -x /tmp/gdbinitvimcmake '
-  let l:exec = 'GdbStart gdb -q ' . l:gdb_init_arg . ' --args ' . s:get_cmake_target_file() . " " . s:get_current_target_args()
+  let l:exec = 'GdbStart gdb -q ' . l:gdb_init_arg . ' --args ' . s:get_cmake_target_file() . " " . s:get_cmake_target_args()
   " echom l:exec
   exec l:exec
 endfunction
@@ -734,7 +708,7 @@ function! s:start_lldb(job_id, exit_code, event)
   else
     let l:lldb_init_arg = ''
   endif
-  exec 'GdbStartLLDB lldb ' . s:get_cmake_target_file() . l:lldb_init_arg . ' -- ' . s:get_current_target_args()
+  exec 'GdbStartLLDB lldb ' . s:get_cmake_target_file() . l:lldb_init_arg . ' -- ' . s:get_cmake_target_args()
 endfunction
 
 function! s:toggle_file_line_column_breakpoint()
@@ -839,7 +813,7 @@ function! s:start_nvim_dap_lldb_vscode(job_id, exit_code, event)
   else
     let l:lldb_init_arg = ''
   endif
-  exec 'DebugLldb ' . s:get_cmake_target_file() . ' --lldbinit ' . l:lldb_init_arg . ' -- ' . s:get_current_target_args()
+  exec 'DebugLldb ' . s:get_cmake_target_file() . ' --lldbinit ' . l:lldb_init_arg . ' -- ' . s:get_cmake_target_args()
 endfunction
 
 function! s:cmake_debug_current_target_nvim_dap_lldb_vscode()
@@ -878,14 +852,13 @@ function! s:_do_debug_current_target()
 endfunction
 
 function! s:cmake_set_cmake_args(...)
-  call s:set_cmake_arguments(a:000)
-  let c = s:get_cmake_dir_cache_object()
-  let c['cmake_args'] = a:000
+  let l:arguments = a:000
+  call s:set_cmake_arguments(l:arguments)
   call s:write_cache_file()
 endfunction
 
 function! g:GetCMakeArgs()
-  return get(s:get_cmake_dir_cache_object(), "cmake_args", [])
+  return s:get_cmake_arguments()
 endfunction
 
 function! s:cmake_set_current_target_run_args(args)
@@ -893,10 +866,7 @@ function! s:cmake_set_current_target_run_args(args)
     call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
     return
   endif
-  let s = a:args
-  let c = s:get_cmake_single_target_cache()
-  let c.args = s
-  call s:set_current_target_args(s)
+  call s:set_cmake_target_args(a:args)
   call s:write_cache_file()
   call s:dump_current_target()
 endfunction
