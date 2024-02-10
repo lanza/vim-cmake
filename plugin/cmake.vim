@@ -100,11 +100,6 @@ function s:set_cmake_cache_file(value)
   let g:state.cache_object = a:value
 endfunction
 
-function! g:CMake_get_cache_file()
-  return s:get_cmake_cache_file()
-endfunction
-
-
 " this needs to be wrapped due to the need to use on_exit to pipeline the config
 function! s:_do_parse_codemodel_json()
   let l:build_dir = s:read_build_dir()
@@ -223,6 +218,11 @@ function! s:initialize_cache_file()
   call s:set_current_target_args('')
   call s:set_cmake_arguments([])
 endfunction
+
+function! g:CMake_get_cache_file()
+  return s:get_cmake_cache_file()
+endfunction
+
 call s:initialize_cache_file()
 
 call s:set_cmake_target_file(get(g:state.dir_cache_object, "current_target_file", v:null))
