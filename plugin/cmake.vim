@@ -169,7 +169,6 @@ let g:cmake_target_relative = get(s:cwd, "current_target_relative", v:null)
 let g:cmake_target_name = get(s:cwd, "current_target_name", v:null)
 
 let g:cmake_build_dir = get(s:cwd, "build_dir", "build")
-let g:cmake_source_dir = get(s:cwd, "source_dir", ".")
 
 try
   let g:current_target_args = g:cmake_cache_file[getcwd()]["targets"][g:cmake_target_file].args
@@ -882,7 +881,6 @@ function! s:cmake_set_source_dir(...)
   let dir = a:1
   let c = s:get_cwd_cache()
   let c['source_dir'] = dir
-  let g:cmake_source_dir = dir
   call s:update_cache_file()
 endfunction
 
