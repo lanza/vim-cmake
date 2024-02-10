@@ -44,6 +44,7 @@ endfunction
 
 let g:cmake_state = {
     \ "cmake_tool": "cmake",
+    \ "cache_file_path": $HOME . '/.vim_cmake.json',
     \ }
 
 function s:get_cmake_target_file()
@@ -108,9 +109,8 @@ function! s:get_cache_file()
   if exists('g:cmake_cache_file')
     return g:cmake_cache_file
   endif
-  let g:vim_cmake_cache_file_path = $HOME . '/.vim_cmake.json'
-  if filereadable(g:vim_cmake_cache_file_path)
-    let l:contents = readfile(g:vim_cmake_cache_file_path)
+  if filereadable(g:state.cache_file_path)
+    let l:contents = readfile(g:state.cache_file_path)
     let l:json_string = join(l:contents, "\n")
 
     call s:set_cmake_cache_file(s:decode_json(l:json_string))
