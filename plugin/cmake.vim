@@ -106,10 +106,7 @@ function s:set_cmake_cache_file(value)
   let g:state.cache_object = a:value
 endfunction
 
-function! s:get_cache_file()
-  if exists('g:cmake_cache_file')
-    return g:cmake_cache_file
-  endif
+function! s:initialize_cache_file()
   if filereadable(g:state.cache_file_path)
     let l:contents = readfile(g:state.cache_file_path)
     let l:json_string = join(l:contents, "\n")
@@ -118,11 +115,10 @@ function! s:get_cache_file()
   else
     call s:set_cmake_cache_file(s:decode_json('{}'))
   endif
-  return g:cmake_cache_file
 endfunction
 
 function! g:CMake_get_cache_file()
-  return s:get_cache_file()
+  return s:get_cmake_cache_file()
 endfunction
 
 
@@ -209,9 +205,9 @@ function! s:parse_codemodel_json_with_completion(completion)
   endif
 endfunction
 
-call s:set_cmake_cache_file(s:get_cache_file())
+call s:initialize_cache_file()
 
-let s:cwd = get(g:cmake_cache_file, getcwd(), {})
+let s:cwd = get(s:get_cmake_cache_file(), getcwd(), {})
 
 call s:set_cmake_target_file(get(s:cwd, "current_target_file", v:null))
 call s:set_cmake_target_relative(get(s:cwd, "current_target_relative", v:null))
@@ -489,7 +485,7 @@ function! s:save_cache_file()
 endfunction
 
 function! s:update_cache_file()
-  let cache = s:get_cache_file()
+  let cache = s:get_cmake_cache_file()
   let serial = s:encode_json(cache)
   let split = split(serial, '\n')
   call writefile(split, $HOME . '/.vim_cmake.json')
@@ -576,7 +572,7 @@ function! s:update_target(target)
     call s:set_cmake_target_file(v:null)
   end
 
-  let cache = s:get_cache_file()
+  let cache = s:get_cmake_cache_file()
   if !has_key(cache, getcwd())
     let cache[getcwd()] = {'current_target_file': s:get_cmake_target_file(), 'targets':{}}
     let cache[getcwd()] = {'current_target_relative': s:get_cmake_target_relative(), 'targets':{}}
@@ -643,7 +639,7 @@ function! s:start_gdb(job_id, exit_code, event)
     return
   endif
   let l:commands = ['b main', 'r']
-  let l:data = s:get_cache_file()
+  let l:data = s:get_cmake_cache_file()
   if has_key(l:data, getcwd())
     let l:dir = l:data[getcwd()]['targets']
     if has_key(l:dir, s:read_build_dir() . '/' . s:get_cmake_target_file())
@@ -683,7 +679,7 @@ function! s:start_lldb(job_id, exit_code, event)
     call add(l:commands, "breakpoint set --func-regex '^main$'")
   endif
 
-  let l:data = s:get_cache_file()
+  let l:data = s:get_cmake_cache_file()
   if has_key(l:data, getcwd())
     let l:breakpoints = l:data[getcwd()]["targets"][s:get_cmake_target_file()]["breakpoints"]
     for b in keys(l:breakpoints)
@@ -755,7 +751,7 @@ endfunction
 
 function! g:CMake_list_breakpoints()
   let args = []
-  let l:bps = s:get_cache_file()[getcwd()]["targets"][s:get_cmake_target_file()]["breakpoints"]
+  let l:bps = s:get_cmake_cache_file()[getcwd()]["targets"][s:get_cmake_target_file()]["breakpoints"]
   for bp in keys(l:bps)
     let l:b = l:bps[bp]
     if l:b["enabled"]
@@ -767,7 +763,7 @@ function! g:CMake_list_breakpoints()
 endfunction
 
 function! s:toggle_breakpoint(break_string)
-  let l:data = s:get_cache_file()
+  let l:data = s:get_cmake_cache_file()
   let l:breakpoints = l:data[getcwd()]['targets'][s:get_cmake_target_file()]["breakpoints"]
   if has_key(l:breakpoints, a:break_string)
     let l:breakpoints[a:break_string]["enabled"] = !l:breakpoints[a:break_string]["enabled"]
@@ -786,7 +782,7 @@ function! s:start_nvim_dap_lldb_vscode(job_id, exit_code, event)
     return
   endif
   let l:commands = ["breakpoint set --func-regex '^main$'", 'r']
-  let l:data = s:get_cache_file()
+  let l:data = s:get_cmake_cache_file()
   if has_key(l:data, getcwd())
     let l:dir = l:data[getcwd()]['targets']
     if has_key(l:dir, s:read_build_dir() . '/' . s:get_cmake_target_file())
@@ -932,7 +928,7 @@ function! s:cmake_update_source_dir(...)
 endfunction
 
 function! s:get_cwd_cache()
-  let c = s:get_cache_file()
+  let c = s:get_cmake_cache_file()
   if !has_key(c, getcwd())
     let c[getcwd()] = {'targets' : {}}
   endif
