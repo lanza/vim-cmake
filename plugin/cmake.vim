@@ -44,6 +44,7 @@ endfunction
 
 let g:cmake_state = {
     \ "cmake_tool": "cmake",
+    \ "cache_object": {},
     \ "cache_file_path": $HOME . '/.vim_cmake.json',
     \ }
 
@@ -99,10 +100,10 @@ if !exists("g:cmake_template_file")
 end
 
 function s:get_cmake_cache_file()
-  return g:cmake_cache_file
+  return g:state.cache_object
 endfunction
 function s:set_cmake_cache_file(value)
-  let g:cmake_cache_file = a:value
+  let g:state.cache_object = a:value
 endfunction
 
 function! s:get_cache_file()
