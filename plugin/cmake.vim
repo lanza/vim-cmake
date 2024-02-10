@@ -45,6 +45,7 @@ endfunction
 let g:state = {
     \ "cmake_tool": "cmake",
     \ "cache_file_path": $HOME . '/.vim_cmake.json',
+    \ "generator": 'Ninja',
     \ "cache_object": v:null,
     \ "dir_cache_object": v:null,
     \ }
@@ -233,8 +234,6 @@ catch /.*/
   call s:set_cmake_arguments([])
 endtry
 
-let g:cmake_generator = 'Ninja'
-
 function! s:make_query_files()
   let l:build_dir = s:read_build_dir()
   if !isdirectory(l:build_dir . '/.cmake/api/v1/query')
@@ -258,7 +257,7 @@ function! s:get_cmake_argument_string()
   call s:make_query_files()
   let l:arguments = []
   let l:arguments += s:get_cmake_arguments()
-  let l:arguments += ['-G ' . g:cmake_generator]
+  let l:arguments += ['-G ' . g:state.generator]
   let l:arguments += ['-DCMAKE_EXPORT_COMPILE_COMMANDS=ON']
 
   let found_source_dir_arg = v:false
