@@ -224,6 +224,10 @@ function! s:initialize_cache_file()
   call s:set_cmake_target_name(v:null)
   call s:set_current_target_args('')
   call s:set_cmake_arguments([])
+  call s:set_cmake_target_file(get(g:state.dir_cache_object, "current_target_file", v:null))
+  call s:set_cmake_target_relative(get(g:state.dir_cache_object, "current_target_relative", v:null))
+  call s:set_cmake_target_name(get(g:state.dir_cache_object, "current_target_name", v:null))
+  call s:set_cmake_build_dir(get(g:state.dir_cache_object, "build_dir", "build"))
 endfunction
 
 function! g:CMake_get_cache_file()
@@ -231,12 +235,6 @@ function! g:CMake_get_cache_file()
 endfunction
 
 call s:initialize_cache_file()
-
-call s:set_cmake_target_file(get(g:state.dir_cache_object, "current_target_file", v:null))
-call s:set_cmake_target_relative(get(g:state.dir_cache_object, "current_target_relative", v:null))
-call s:set_cmake_target_name(get(g:state.dir_cache_object, "current_target_name", v:null))
-
-call s:set_cmake_build_dir(get(g:state.dir_cache_object, "build_dir", "build"))
 
 try
   call s:set_current_target_args(s:get_cmake_cache_file()[getcwd()]["targets"][s:get_cmake_target_file()].args)
