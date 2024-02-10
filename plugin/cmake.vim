@@ -50,7 +50,7 @@ function s:set_if_empty(object, key, val)
 endfunction
 
 function s:get_name_relative_pairs()
-  return g:state.dir_cache_object.name_relative_pairs
+  return s:get_cmake_dir_cache_object().name_relative_pairs
 endfunction
 
 let g:state = {
@@ -63,18 +63,19 @@ let g:state = {
     \ }
 
 function s:get_cmake_target_file()
-  return g:state.dir_cache_object.current_target_file
+  return s:get_cmake_dir_cache_object().current_target_file
 endfunction
 function s:set_cmake_target_file(value)
-  let g:state.dir_cache_object.current_target_file = a:value
-  let g:state.current_target_cache_object = g:state.dir_cache_object.targets[a:value]
+  let l:dco = s:get_cmake_dir_cache_object()
+  let l:dco.current_target_file = a:value
+  let g:state.current_target_cache_object = s:get_cmake_dir_cache_object().targets[a:value]
 endfunction
 
 function s:add_cmake_target_to_target_list(target_name)
   let l:file = s:get_cmake_build_dir() . '/' . g:tar_to_file[a:target_name]
   let l:relative = g:tar_to_file[a:target_name]
 
-  call s:set_if_empty(g:state.dir_cache_object.targets, l:file, {
+  call s:set_if_empty(s:get_cmake_dir_cache_object().targets, l:file, {
       \ "current_target_file" : l:file,
       \ "current_target_relative" : l:relative,
       \ "current_target_name" : a:target_name,
