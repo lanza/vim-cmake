@@ -100,6 +100,8 @@ function s:set_cmake_cache_file(value)
   let g:state.cache_object = a:value
 endfunction
 
+function s:get_state()
+  return g:state
 endfunction
 
 " this needs to be wrapped due to the need to use on_exit to pipeline the config
@@ -263,7 +265,7 @@ function! s:get_cmake_argument_string()
   call s:make_query_files()
   let l:arguments = []
   let l:arguments += s:get_cmake_arguments()
-  let l:arguments += ['-G ' . g:state.generator]
+  let l:arguments += ['-G ' . s:get_state().generator]
   let l:arguments += ['-DCMAKE_EXPORT_COMPILE_COMMANDS=ON']
 
   let found_source_dir_arg = v:false
@@ -345,7 +347,7 @@ function! s:cmake_configure_and_generate_with_completion(completion)
       return
     endif
   endif
-  let l:command = g:state.cmake_tool . " " . s:get_cmake_argument_string()
+  let l:command = s:get_state().cmake_tool . " " . s:get_cmake_argument_string()
   echo l:command
   call s:get_only_window()
   call termopen(split(l:command), {'on_exit': a:completion})
