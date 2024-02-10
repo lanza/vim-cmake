@@ -93,6 +93,13 @@ function! s:set_cmake_build_dir(value)
   let g:state.dir_cache_object.build_dir = a:value
 endfunction
 
+function! s:get_cmake_source_dir()
+  return g:state.dir_cache_object.source_dir
+endfunction
+function! s:set_cmake_source_dir(value)
+  let g:state.dir_cache_object.source_dir = a:value
+endfunction
+
 function s:get_cmake_cache_file()
   return g:state.cache_object
 endfunction
@@ -942,8 +949,7 @@ endfunction
 
 function! s:cmake_update_source_dir(...)
   let dir = a:1
-  let c = s:get_cmake_dir_cache_object() " don't touch
-  let c['source_dir'] = dir
+  call s:set_cmake_source_dir(dir)
   call s:write_cache_file()
 endfunction
 
