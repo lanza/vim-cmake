@@ -588,6 +588,24 @@ function! s:cmake_get_target_and_run_action(target_list, action)
   endif
 endfunction
 
+function s:find_current_dir_or_parent_in_cache_file(file)
+  let s:joined = getcwd()
+  let s:components = split(s:joined,"/")
+
+  while s:joined != $HOME && s:joined != "/"
+    if has_key(a:file, s:joined)
+      return a:file[s:joined]
+    endif
+
+    let s:components = s:components[0:len(s:components)-2]
+    echom s:components
+    let s:joined = "/" .. join(s:components, "/")
+    echom s:joined
+  endwhile
+
+  return s:get_cwd_cache()
+endfunction
+
 " TODO: Fix this breakpoint handling
 function! s:start_gdb(job_id, exit_code, event)
   if a:exit_code != 0
