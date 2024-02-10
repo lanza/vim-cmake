@@ -213,6 +213,7 @@ function! s:initialize_cache_file()
   let g:state.dir_cache_object = g:state.cache_object[getcwd()]
 
   " initialize directory cache object
+  let l:dco = g:state.dir_cache_object
   call s:set_if_empty(l:dco, "current_target_file", v:null)
   call s:set_if_empty(l:dco, "current_target_relative", v:null)
   call s:set_if_empty(l:dco, "current_target_name", v:null)
