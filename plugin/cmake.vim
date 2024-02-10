@@ -144,7 +144,7 @@ endfunction
 
 " this needs to be wrapped due to the need to use on_exit to pipeline the config
 function! s:_do_parse_codemodel_json()
-  let l:build_dir = s:get_build_dir()
+  let l:build_dir = s:read_build_dir()
   let g:cmake_query_response = l:build_dir . '/.cmake/api/v1/reply/'
   let l:codemodel_file = globpath(g:cmake_query_response, 'codemodel*')
   let l:codemodel_contents = readfile(l:codemodel_file)
@@ -195,7 +195,7 @@ function! s:_do_parse_codemodel_json()
 endf
 
 function! g:Parse_codemodel_json()
-  let l:build_dir = s:get_build_dir()
+  let l:build_dir = s:read_build_dir()
   if !isdirectory(l:build_dir . '/.cmake/api/v1/reply')
     echom 'Must configure and generate first'
     call s:assure_query_reply_with_completion(function('s:_do_parse_codemodel_json'))
@@ -216,7 +216,7 @@ function! s:compose_completions(outer, inner)
 endfunction
 
 function! s:parse_codemodel_json_with_completion(completion)
-  let l:build_dir = s:get_build_dir()
+  let l:build_dir = s:read_build_dir()
   if !isdirectory(l:build_dir . '/.cmake/api/v1/reply')
     call s:assure_query_reply_with_completion(function('s:do_all_completions', [function('s:_do_parse_codemodel_json'), a:completion]))
   else
@@ -250,7 +250,7 @@ endtry
 let g:cmake_generator = 'Ninja'
 
 function! s:make_query_files()
-  let l:build_dir = s:get_build_dir()
+  let l:build_dir = s:read_build_dir()
   if !isdirectory(l:build_dir . '/.cmake/api/v1/query')
     call mkdir(l:build_dir . '/.cmake/api/v1/query', 'p')
   endif
@@ -260,7 +260,7 @@ function! s:make_query_files()
 endfunction
 
 function! s:assure_query_reply_with_completion(completion)
-  let l:build_dir = s:get_build_dir()
+  let l:build_dir = s:read_build_dir()
   if !isdirectory(l:build_dir . '/.cmake/api/v1/reply')
     call s:cmake_configure_and_generate_with_completion(a:completion)
   else
@@ -295,7 +295,7 @@ function! s:get_cmake_argument_string()
   endif
 
   if !found_build_dir_arg
-    let l:arguments += ['-B', s:get_build_dir()]
+    let l:arguments += ['-B', s:read_build_dir()]
   endif
 
   if !found_source_dir_arg
@@ -429,15 +429,15 @@ let g:cmake_last_window = v:null
 let g:cmake_last_buffer = v:null
 
 function! s:_build_target_with_completion(target, completion)
-  if s:is_absolute_path(s:get_build_dir())
-    let l:directory = s:get_build_dir()
+  if s:is_absolute_path(s:read_build_dir())
+    let l:directory = s:read_build_dir()
   else
     let l:cwd = getcwd()
-    let l:directory = cwd . '/' . s:get_build_dir()
+    let l:directory = cwd . '/' . s:read_build_dir()
   endif
 
   if g:vim_cmake_build_tool ==? 'vsplit'
-    let l:command = 'cmake --build ' . s:get_build_dir() . ' --target ' . a:target
+    let l:command = 'cmake --build ' . s:read_build_dir() . ' --target ' . a:target
     call s:get_only_window()
     call termopen(l:command, { "on_exit": a:completion })
   elseif g:vim_cmake_build_tool ==? 'vim-dispatch'
@@ -466,7 +466,7 @@ if !exists('g:vim_cmake_build_tool')
 endif
 
 function! s:cmake_clean()
-  let l:command = 'cmake --build ' . s:get_build_dir() . ' --target clean'
+  let l:command = 'cmake --build ' . s:read_build_dir() . ' --target clean'
   exe "vs | exe \"normal \<c-w>L\" | terminal " . l:command
 endfunction
 
@@ -476,23 +476,23 @@ endfunction
 
 function s:_build_all_with_completion(completion)
   if g:vim_cmake_build_tool ==? 'vsplit'
-    let l:command = 'cmake --build ' . s:get_build_dir()
+    let l:command = 'cmake --build ' . s:read_build_dir()
     call s:get_only_window()
     call termopen(l:command, { "on_exit": a:completion })
   elseif g:vim_cmake_build_tool ==? 'Makeshift'
     let &makeprg = 'ninja'
     let cwd = getcwd()
-    let b:makeshift_root = cwd . '/' . s:get_build_dir()
+    let b:makeshift_root = cwd . '/' . s:read_build_dir()
     " completion not honored
     MakeshiftBuild
   elseif g:vim_cmake_build_tool ==? 'vim-dispatch'
     let cwd = getcwd()
-    let &makeprg = 'ninja -C ' . cwd . '/' . s:get_build_dir()
+    let &makeprg = 'ninja -C ' . cwd . '/' . s:read_build_dir()
     " completion not honored
     Make
   elseif g:vim_cmake_build_tool ==? 'make'
     let cwd = getcwd()
-    let &makeprg = 'ninja -C ' . cwd . '/' . s:get_build_dir()
+    let &makeprg = 'ninja -C ' . cwd . '/' . s:read_build_dir()
     " completion not honored
     make
   else
@@ -587,7 +587,7 @@ function! s:update_target(target)
   call s:set_cmake_target_name(a:target)
   if has_key(g:tar_to_file, a:target)
     call s:set_cmake_target_relative(g:tar_to_file[a:target])
-    call s:set_cmake_target_file(s:get_build_dir() . '/' . g:tar_to_file[a:target])
+    call s:set_cmake_target_file(s:read_build_dir() . '/' . g:tar_to_file[a:target])
   else
     call s:set_cmake_target_relative(v:null)
     call s:set_cmake_target_file(v:null)
@@ -626,9 +626,9 @@ function! s:dump_current_target()
 endfunction
 
 function! s:cmake_run_target_with_name(target)
-  let s:cmake_target_file = s:get_build_dir() . '/' . g:tar_to_file[a:target]
+  let s:cmake_target_file = s:read_build_dir() . '/' . g:tar_to_file[a:target]
   try
-    exec '!cmake --build ' . s:get_build_dir() . ' --target ' . a:target
+    exec '!cmake --build ' . s:read_build_dir() . ' --target ' . a:target
   catch /.*/
     echo 'Failed to build ' . a:target
   finally
@@ -663,8 +663,8 @@ function! s:start_gdb(job_id, exit_code, event)
   let l:data = s:get_cache_file()
   if has_key(l:data, getcwd())
     let l:dir = l:data[getcwd()]['targets']
-    if has_key(l:dir, s:get_build_dir() . '/' . s:get_cmake_target_file())
-      let l:target = l:dir[s:get_build_dir() . '/' . s:get_cmake_target_file()]
+    if has_key(l:dir, s:read_build_dir() . '/' . s:get_cmake_target_file())
+      let l:target = l:dir[s:read_build_dir() . '/' . s:get_cmake_target_file()]
       if has_key(l:target, 'breakpoints')
         let l:breakpoints = l:target['breakpoints']
         for b in l:breakpoints
@@ -806,8 +806,8 @@ function! s:start_nvim_dap_lldb_vscode(job_id, exit_code, event)
   let l:data = s:get_cache_file()
   if has_key(l:data, getcwd())
     let l:dir = l:data[getcwd()]['targets']
-    if has_key(l:dir, s:get_build_dir() . '/' . s:get_cmake_target_file())
-      let l:target = l:dir[s:get_build_dir() . '/' . s:get_cmake_target_file()]
+    if has_key(l:dir, s:read_build_dir() . '/' . s:get_cmake_target_file())
+      let l:target = l:dir[s:read_build_dir() . '/' . s:get_cmake_target_file()]
       if has_key(l:target, 'breakpoints')
         let l:breakpoints = l:target['breakpoints']
         for b in l:breakpoints
@@ -933,7 +933,7 @@ function! s:cmake_create_file(...)
   end
 endfunction
 
-function! s:cmake_set_build_dir(...)
+function! s:cmake_update_build_dir(...)
   let dir = a:1
   let c = s:get_cwd_cache() " don't touch
   let c['build_dir'] = dir
@@ -941,7 +941,7 @@ function! s:cmake_set_build_dir(...)
   call s:update_cache_file()
 endfunction
 
-function! s:cmake_set_source_dir(...)
+function! s:cmake_update_source_dir(...)
   let dir = a:1
   let c = s:get_cwd_cache() " don't touch
   let c['source_dir'] = dir
@@ -969,10 +969,10 @@ function g:GetCMakeSourceDir()
 endfunction
 
 function g:GetCMakeBuildDir()
-  return s:get_build_dir()
+  return s:read_build_dir()
 endfunction
 
-function! s:get_build_dir()
+function! s:read_build_dir()
   let c = s:get_cwd_cache()
   if !has_key(c, 'build_dir')
     if exists("g:cmake_default_build_dir")
@@ -985,7 +985,7 @@ function! s:get_build_dir()
 endfunction
 
 function! s:cmake_open_cache_file()
-  exe 'e ' . s:get_build_dir() . '/CMakeCache.txt'
+  exe 'e ' . s:read_build_dir() . '/CMakeCache.txt'
 endf
 
 function s:get_build_tools(...)
@@ -1014,8 +1014,8 @@ endfunction
 command! -nargs=0 CMakeOpenCacheFile call s:cmake_open_cache_file()
 
 command! -nargs=* -complete=shellcmd CMakeSetCMakeArgs call s:cmake_set_cmake_args(<f-args>)
-command! -nargs=1 -complete=shellcmd CMakeSetBuildDir call s:cmake_set_build_dir(<f-args>)
-command! -nargs=1 -complete=shellcmd CMakeSetSourceDir call s:cmake_set_source_dir(<f-args>)
+command! -nargs=1 -complete=shellcmd CMakeSetBuildDir call s:cmake_update_build_dir(<f-args>)
+command! -nargs=1 -complete=shellcmd CMakeSetSourceDir call s:cmake_update_source_dir(<f-args>)
 
 command! -nargs=0  CMakeConfigureAndGenerate call s:cmake_configure_and_generate()
 command! -nargs=1 -complete=shellcmd CMDBConfigureAndGenerate call s:cmdb_configure_and_generate()
@@ -1050,3 +1050,5 @@ command! CMakeEditCurrentTargetRunArgs call feedkeys(":CMakeSetCurrentTargetRunA
 command! CMakeEditCMakeArgs call feedkeys(":CMakeSetCMakeArgs " . eval("join(g:GetCMakeArgs(), ' ')"))
 command! CMakeEditBuildDir call feedkeys(":CMakeSetBuildDir " . eval("g:GetCMakeBuildDir()"))
 command! CMakeEditSourceDir call feedkeys(":CMakeSetSourceDir " . eval("g:GetCMakeSourceDir()"))
+
+
