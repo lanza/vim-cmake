@@ -2,25 +2,6 @@
 " Maintainer: Nathan Lanza <https://github.com/lanza>
 " Version:    0.1
 
-function s:find_current_dir_or_parent_in_cache_file(file)
-  let s:joined = getcwd()
-  let s:components = split(s:joined,"/")
-
-  while s:joined != $HOME && s:joined != "/"
-    if has_key(a:file, s:joined)
-      return a:file[s:joined]
-    endif
-
-    let s:components = s:components[0:len(s:components)-2]
-    echom s:components
-    let s:joined = "/" .. join(s:components, "/")
-    echom s:joined
-  endwhile
-
-  return s:get_cwd_cache()
-endfunction
-
-
 function! s:decode_json(string) abort
   if exists('*json_decode')
     return json_decode(a:string)
@@ -227,8 +208,7 @@ endfunction
 
 call s:set_cmake_cache_file(s:get_cache_file())
 
-" this shouldn't be here...
-let s:cwd = s:find_current_dir_or_parent_in_cache_file(s:get_cmake_cache_file())
+let s:cwd = get(g:cmake_cache_file, getcwd(), {})
 
 call s:set_cmake_target_file(get(s:cwd, "current_target_file", v:null))
 call s:set_cmake_target_relative(get(s:cwd, "current_target_relative", v:null))
