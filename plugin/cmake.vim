@@ -2,6 +2,13 @@
 " Maintainer: Nathan Lanza <https://github.com/lanza>
 " Version:    0.1
 
+if exists('g:loaded_vim_cmake')
+  finish
+else
+  let g:loaded_vim_cmake = 1
+endif
+
+
 function! s:decode_json(string) abort
   if exists('*json_decode')
     return json_decode(a:string)
@@ -34,13 +41,6 @@ function! s:encode_json(object) abort
     return string(a:object)
   endif
 endfunction
-
-
-if exists('g:loaded_vim_cmake')
-  finish
-else
-  let g:loaded_vim_cmake = 1
-endif
 
 let g:cmake_tool = 'cmake'
 
