@@ -78,10 +78,10 @@ function s:set_cmake_target_name(value)
   let g:state.dir_cache_object.current_target_name = a:value
 endfunction
 
-function s:get_current_target_args()
+function! s:get_current_target_args()
   return g:state.dir_cache_object.current_target_args
 endfunction
-function s:set_current_target_args(value)
+function! s:set_current_target_args(value)
   let g:state.dir_cache_object.current_target_args = a:value
 endfunction
 
@@ -894,31 +894,26 @@ function! s:cmake_set_current_target_run_args(args)
     return
   endif
   let s = a:args
-  let c = s:get_target_cache()
-  let c['args'] = s
-  call s:get_current_target_args(s)
+  let c = s:get_cmake_single_target_cache()
+  let c.args = s
+  call s:set_current_target_args(s)
   call s:write_cache_file()
   call s:dump_current_target()
 endfunction
 
 function! g:GetCMakeCurrentTargetRunArgs()
-  let c = s:get_target_cache()
-  return get(c, 'args', "")
+  let c = s:get_cmake_single_target_cache()
+  call s:set_if_empty(c, "args", "")
+  return c.args
 endfunction
 
-function! s:get_targets_cache()
-  let c = s:get_cmake_dir_cache_object()
-  if !has_key(c, 'targets')
-    let c['targets'] = {}
-  endif
-  return c['targets']
+function! s:get_cmake_targets_object()
+  return g:state.dir_cache_object.targets
 endfunction
 
-function! s:get_target_cache()
-  let c = s:get_targets_cache()
-  if !has_key(c, s:get_cmake_target_file())
-    let c[s:get_cmake_target_file()] = {}
-  endif
+function! s:get_cmake_single_target_cache()
+  let c = s:get_cmake_targets_object()
+  call s:set_if_empty(c, s:get_cmake_target_file(), {})
   return c[s:get_cmake_target_file()]
 endfunction
 
