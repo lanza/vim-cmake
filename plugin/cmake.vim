@@ -233,6 +233,7 @@ function! s:initialize_cache_file()
   call s:set_if_empty(l:dco, "current_target_args", '')
   call s:set_if_empty(l:dco, "cmake_arguments", [])
   call s:set_if_empty(l:dco, "build_dir", g:state.default_build_dir)
+  call s:set_if_empty(l:dco, "source_dir", ".")
   call s:set_if_empty(l:dco, "targets", {})
 endfunction
 
@@ -303,7 +304,7 @@ function! s:get_cmake_argument_string()
   endif
 
   if !found_source_dir_arg
-    let l:arguments += ['-S', s:get_source_dir()]
+    let l:arguments += ['-S', s:get_cmake_source_dir()]
   endif
 
   let l:command = join(l:arguments, ' ')
@@ -350,11 +351,11 @@ function! s:cmake_configure_and_generate()
 endfunction
 
 function! s:cmake_configure_and_generate_with_completion(completion)
-  if !filereadable(s:get_source_dir() . "/CMakeLists.txt")
+  if !filereadable(s:get_cmake_source_dir() . "/CMakeLists.txt")
     if exists("g:cmake_template_file")
-      silent exec "! cp " . g:cmake_template_file . " " . s:get_source_dir() . "/CMakeLists.txt"
+      silent exec "! cp " . g:cmake_template_file . " " . s:get_cmake_source_dir() . "/CMakeLists.txt"
     else
-      echom "Could not find a CMakeLists at directory " . s:get_source_dir()
+      echom "Could not find a CMakeLists at directory " . s:get_cmake_source_dir()
       return
     endif
   endif
@@ -956,16 +957,12 @@ function! s:get_cmake_dir_cache_object()
   return g:state.dir_cache_object
 endfunction
 
-function! s:get_source_dir()
-  let c = s:get_cmake_dir_cache_object()
-  if !has_key(c, 'source_dir')
-    let c['source_dir'] = '.'
-  endif
-  return c['source_dir']
+function! s:get_cmake_source_dir()
+  return g:state.dir_cache_object.source_dir
 endfunction
 
 function g:GetCMakeSourceDir()
-  return s:get_source_dir()
+  return s:get_cmake_source_dir()
 endfunction
 
 function g:GetCMakeBuildDir()
