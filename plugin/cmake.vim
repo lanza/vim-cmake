@@ -51,7 +51,7 @@ let g:state = {
     \ }
 
 function s:get_cmake_target_file()
-  return g:state.g:state.dir_cache_object.current_target_file
+  return g:state.dir_cache_object.current_target_file
 endfunction
 function s:set_cmake_target_file(value)
   let g:state.dir_cache_object.current_target_file = a:value
