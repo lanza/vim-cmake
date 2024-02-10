@@ -853,17 +853,20 @@ function s:start_nvim_dap_lldb_vscode(job_id, exit_code, event)
 endfunction
 
 function s:cmake_debug_current_target_nvim_dap_lldb_vscode()
-  let s:get_state().debugger = 'nvim_dap_lldb_vscode'
+  let l:state = s:get_state()
+  let l:state.debugger = 'nvim_dap_lldb_vscode'
   call s:cmake_debug_current_target()
 endf
 
 function s:cmake_debug_current_target_lldb()
-  let s:get_state().debugger = 'lldb'
+  let l:state = s:get_state()
+  let l:state.debugger = 'lldb'
   call s:cmake_debug_current_target()
 endf
 
 function s:cmake_debug_current_target_gdb()
-  let s:get_state().debugger = 'gdb'
+  let l:state = s:get_state()
+  let l:state.debugger = 'gdb'
   call s:cmake_debug_current_target()
 endf
 
