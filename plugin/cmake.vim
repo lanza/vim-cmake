@@ -63,7 +63,20 @@ function s:get_cmake_target_file()
 endfunction
 function s:set_cmake_target_file(value)
   let g:state.dir_cache_object.current_target_file = a:value
-  let g:state.current_target_cache_object = s:set_if_empty(g:state.dir_cache_object.targets, a:value, {})
+  let g:state.current_target_cache_object = g:state.dir_cache_object.targets[a:value]
+endfunction
+
+function s:add_cmake_target_to_target_list(target_name)
+  let l:file = s:get_cmake_build_dir() . '/' . g:tar_to_file[a:target_name]
+  let l:relative = g:tar_to_file[a:target_name]
+
+  call s:set_if_empty(g:state.dir_cache_object.targets, l:file, {
+      \ "current_target_file" : l:file,
+      \ "current_target_relative" : l:relative,
+      \ "current_target_name" : a:target_name,
+      \ "args": "",
+      \ "breakpoints": {}
+      \ })
 endfunction
 
 function s:get_cmake_target_relative()
@@ -251,8 +264,8 @@ function s:initialize_cache_file()
   " initialize current target cache object
   call s:set_if_empty(l:dco, "current_target_file", v:null)
 
-  if l:dco.current_target_file
-    let g:state.current_target_cache_object = l:dco.current_target_file
+  if has_key(l:dco, "current_target_file")
+    let g:state.current_target_cache_object = l:dco.targets[l:dco.current_target_file]
   else
     let g:state.current_target_cache_object = v:null
   endif
@@ -594,12 +607,11 @@ function s:cmake_run_current_target()
   call s:parse_codemodel_json_with_completion(function("s:_do_run_current_target"))
 endfunction
 
-  call s:set_cmake_target_file(s:get_cmake_build_dir() . '/' . g:tar_to_file[a:target])
-  call s:set_cmake_target_relative(g:tar_to_file[a:target])
-  call s:set_cmake_target_name(a:target)
-  call s:set_cmake_target_args("")
-  call s:set_cmake_target_breakpoints({})
 function s:select_target(target_name)
+  call s:add_cmake_target_to_target_list(a:target_name)
+
+  let l:file = s:get_cmake_build_dir() . '/' . g:tar_to_file[a:target_name]
+  call s:set_cmake_target_file(l:file)
 
   call s:write_cache_file()
 endfunction
