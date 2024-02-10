@@ -100,6 +100,12 @@ function s:set_cmake_cache_file(value)
   let g:state.cache_object = a:value
 endfunction
 
+function! s:set_if_empty(object, key, val)
+  if !has_key(a:object, a:key)
+    let a:object[a:key] = a:val
+  endif
+endfunction
+
 " this needs to be wrapped due to the need to use on_exit to pipeline the config
 function! s:_do_parse_codemodel_json()
   let l:build_dir = s:read_build_dir()
@@ -207,27 +213,12 @@ function! s:initialize_cache_file()
   let g:state.dir_cache_object = g:state.cache_object[getcwd()]
 
   " initialize directory cache object
-  let l:dco = g:state.dir_cache_object
-  if !has_key(l:dco, "current_target_file")
-    let l:dco.current_target_file = v:null
-  endif
-  if !has_key(l:dco, "current_target_relative")
-    let l:dco.current_target_relative = v:null
-  endif
-  if !has_key(l:dco, "current_target_name")
-    let l:dco.current_target_name = v:null
-  endif
-
-  " maintain old global vars representing state
-  call s:set_cmake_target_file(v:null)
-  call s:set_cmake_target_relative(v:null)
-  call s:set_cmake_target_name(v:null)
-  call s:set_current_target_args('')
-  call s:set_cmake_arguments([])
-  call s:set_cmake_target_file(get(g:state.dir_cache_object, "current_target_file", v:null))
-  call s:set_cmake_target_relative(get(g:state.dir_cache_object, "current_target_relative", v:null))
-  call s:set_cmake_target_name(get(g:state.dir_cache_object, "current_target_name", v:null))
-  call s:set_cmake_build_dir(get(g:state.dir_cache_object, "build_dir", "build"))
+  call s:set_if_empty(l:dco, "current_target_file", v:null)
+  call s:set_if_empty(l:dco, "current_target_relative", v:null)
+  call s:set_if_empty(l:dco, "current_target_name", v:null)
+  call s:set_if_empty(l:dco, "current_target_args", '')
+  call s:set_if_empty(l:dco, "cmake_arguments", [])
+  call s:set_if_empty(l:dco, "build_dir", "build")
 endfunction
 
 function! g:CMake_get_cache_file()
