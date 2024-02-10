@@ -401,7 +401,7 @@ endfunction
 let s:noop = function('s:noop_function')
 
 function s:_update_target_and_build(target)
-  call s:update_target(a:target)
+  call s:select_target(a:target)
   call s:_do_build_current_target()
 endfunction
 
@@ -569,7 +569,7 @@ endf
 
 function s:_update_target_and_run(target)
   " echom "_update_target_and_run(" . a:target . ")"
-  call s:update_target(a:target)
+  call s:select_target(a:target)
   call s:_do_run_current_target()
 endfunction
 
@@ -594,12 +594,12 @@ function s:cmake_run_current_target()
   call s:parse_codemodel_json_with_completion(function("s:_do_run_current_target"))
 endfunction
 
-function s:update_target(target)
   call s:set_cmake_target_file(s:get_cmake_build_dir() . '/' . g:tar_to_file[a:target])
   call s:set_cmake_target_relative(g:tar_to_file[a:target])
   call s:set_cmake_target_name(a:target)
   call s:set_cmake_target_args("")
   call s:set_cmake_target_breakpoints({})
+function s:select_target(target_name)
 
   call s:write_cache_file()
 endfunction
