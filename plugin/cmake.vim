@@ -62,9 +62,22 @@ else
 endif
 
 let g:cmake_tool = 'cmake'
+
 let g:cmake_target_file = v:null
+function s:get_cmake_target_file()
+  return g:cmake_target_file
+endfunction
+
 let g:cmake_target_relative = v:null
+function s:get_cmake_target_relative()
+  return g:cmake_target_relative
+endfunction
+
 let g:cmake_target_name = v:null
+function s:get_cmake_target_name()
+  return g:cmake_target_name
+endfunction
+
 let g:current_target_args = ''
 let g:cmake_arguments = []
 
@@ -179,7 +192,7 @@ endfunction
 let g:cmake_cache_file = s:get_cache_file()
 
 " this shouldn't be here...
-let s:cwd = get(g:cmake_cache_file, getcwd(), {})
+let s:cwd = s:find_current_dir_or_parent_in_cache_file(g:cmake_cache_file)
 
 let g:cmake_target_file = get(s:cwd, "current_target_file", v:null)
 let g:cmake_target_relative = get(s:cwd, "current_target_relative", v:null)
@@ -188,7 +201,7 @@ let g:cmake_target_name = get(s:cwd, "current_target_name", v:null)
 let g:cmake_build_dir = get(s:cwd, "build_dir", "build")
 
 try
-  let g:current_target_args = g:cmake_cache_file[getcwd()]["targets"][g:cmake_target_file].args
+  let g:current_target_args = g:cmake_cache_file[getcwd()]["targets"][s:get_cmake_target_file()].args
 catch /.*/
   let g:current_target_args = ''
 endtry
@@ -343,12 +356,12 @@ endfunction
 
 
 function! s:_do_build_current_target_with_completion(completion)
-  if g:cmake_target_name == "" || g:cmake_target_name == v:null
+  if s:get_cmake_target_name() == "" || s:get_cmake_target_name() == v:null
     call s:cmake_get_target_and_run_action(g:tars, 's:_update_target_and_build')
     return
   endif
 
-  call s:_build_target_with_completion(g:cmake_target_name, a:completion)
+  call s:_build_target_with_completion(s:get_cmake_target_name(), a:completion)
 endfunction
 
 function! s:_do_build_all_with_completion(completion)
@@ -502,7 +515,7 @@ function! s:_run_current_target(job_id, exit_code, event)
   call s:close_last_window_if_open()
   if a:exit_code == 0
     call s:get_only_window()
-    exe "terminal \"" . g:cmake_target_file . "\" " . g:current_target_args
+    exe "terminal \"" . s:get_cmake_target_file() . "\" " . g:current_target_args
   endif
   let g:vim_cmake_build_tool = g:vim_cmake_build_tool_old
 endf
@@ -514,8 +527,8 @@ function! s:_update_target_and_run(target)
 endfunction
 
 function! s:_do_run_current_target()
-  " echom "_do_run_current_target() with g:cmake_target_file = " . g:cmake_target_file
-  if g:cmake_target_file == '' || g:cmake_target_file == v:null
+  " echom "_do_run_current_target() with s:get_cmake_target_file() = " . s:get_cmake_target_file()
+  if s:get_cmake_target_file() == '' || s:get_cmake_target_file() == v:null
     " because vimscript doesn't have asynch the below just recursively calls this
     call s:cmake_get_target_and_run_action(g:execs, 's:_update_target_and_run')
     return
@@ -546,34 +559,34 @@ function! s:update_target(target)
 
   let cache = s:get_cache_file()
   if !has_key(cache, getcwd())
-    let cache[getcwd()] = {'current_target_file': g:cmake_target_file, 'targets':{}}
-    let cache[getcwd()] = {'current_target_relative': g:cmake_target_relative, 'targets':{}}
-    let cache[getcwd()] = {'current_target_name': g:cmake_target_name, 'targets':{}}
+    let cache[getcwd()] = {'current_target_file': s:get_cmake_target_file(), 'targets':{}}
+    let cache[getcwd()] = {'current_target_relative': s:get_cmake_target_relative(), 'targets':{}}
+    let cache[getcwd()] = {'current_target_name': s:get_cmake_target_name(), 'targets':{}}
 
     let cache[getcwd()]["targets"] = {}
   else
     let dir = cache[getcwd()]
-    let dir['current_target_file'] = g:cmake_target_file
-    let dir['current_target_relative'] = g:cmake_target_relative
-    let dir['current_target_name'] = g:cmake_target_name
+    let dir['current_target_file'] = s:get_cmake_target_file()
+    let dir['current_target_relative'] = s:get_cmake_target_relative()
+    let dir['current_target_name'] = s:get_cmake_target_name()
   endif
 
-  if !has_key(cache[getcwd()]["targets"], g:cmake_target_file)
+  if !has_key(cache[getcwd()]["targets"], s:get_cmake_target_file())
     let l:target = {
-        \ "cmake_target_file": g:cmake_target_file,
-        \ 'current_target_relative': g:cmake_target_relative,
-        \ 'current_target_name': g:cmake_target_name,
+        \ "cmake_target_file": s:get_cmake_target_file(),
+        \ 'current_target_relative': s:get_cmake_target_relative(),
+        \ 'current_target_name': s:get_cmake_target_name(),
         \ "breakpoints": {},
         \ "args": ""
         \ }
-    let cache[getcwd()]["targets"][g:cmake_target_file] = l:target
+    let cache[getcwd()]["targets"][s:get_cmake_target_file()] = l:target
   endif
 
   call s:update_cache_file()
 endfunction
 
 function! s:dump_current_target()
-  echo "Current target set to '" . g:cmake_target_file . "' with args '" . g:current_target_args . "'"
+  echo "Current target set to '" . s:get_cmake_target_file() . "' with args '" . g:current_target_args . "'"
 endfunction
 
 function! s:cmake_run_target_with_name(target)
@@ -614,8 +627,8 @@ function! s:start_gdb(job_id, exit_code, event)
   let l:data = s:get_cache_file()
   if has_key(l:data, getcwd())
     let l:dir = l:data[getcwd()]['targets']
-    if has_key(l:dir, s:get_build_dir() . '/' . g:cmake_target_file)
-      let l:target = l:dir[s:get_build_dir() . '/' . g:cmake_target_file]
+    if has_key(l:dir, s:get_build_dir() . '/' . s:get_cmake_target_file())
+      let l:target = l:dir[s:get_build_dir() . '/' . s:get_cmake_target_file()]
       if has_key(l:target, 'breakpoints')
         let l:breakpoints = l:target['breakpoints']
         for b in l:breakpoints
@@ -636,7 +649,7 @@ function! s:start_gdb(job_id, exit_code, event)
   call s:close_last_buffer_if_open()
 
   let l:gdb_init_arg = ' -x /tmp/gdbinitvimcmake '
-  let l:exec = 'GdbStart gdb -q ' . l:gdb_init_arg . ' --args ' . g:cmake_target_file . " " . g:current_target_args
+  let l:exec = 'GdbStart gdb -q ' . l:gdb_init_arg . ' --args ' . s:get_cmake_target_file() . " " . g:current_target_args
   " echom l:exec
   exec l:exec
 endfunction
@@ -653,7 +666,7 @@ function! s:start_lldb(job_id, exit_code, event)
 
   let l:data = s:get_cache_file()
   if has_key(l:data, getcwd())
-    let l:breakpoints = l:data[getcwd()]["targets"][g:cmake_target_file]["breakpoints"]
+    let l:breakpoints = l:data[getcwd()]["targets"][s:get_cmake_target_file()]["breakpoints"]
     for b in keys(l:breakpoints)
       echom b
       let l:bp = l:breakpoints[b]
@@ -677,7 +690,7 @@ function! s:start_lldb(job_id, exit_code, event)
   else
     let l:lldb_init_arg = ''
   endif
-  exec 'GdbStartLLDB lldb ' . g:cmake_target_file . l:lldb_init_arg . ' -- ' . g:current_target_args
+  exec 'GdbStartLLDB lldb ' . s:get_cmake_target_file() . l:lldb_init_arg . ' -- ' . g:current_target_args
 endfunction
 
 function! s:toggle_file_line_column_breakpoint()
@@ -723,7 +736,7 @@ endfunction
 
 function! g:CMake_list_breakpoints()
   let args = []
-  let l:bps = s:get_cache_file()[getcwd()]["targets"][g:cmake_target_file]["breakpoints"]
+  let l:bps = s:get_cache_file()[getcwd()]["targets"][s:get_cmake_target_file()]["breakpoints"]
   for bp in keys(l:bps)
     let l:b = l:bps[bp]
     if l:b["enabled"]
@@ -736,7 +749,7 @@ endfunction
 
 function! s:toggle_breakpoint(break_string)
   let l:data = s:get_cache_file()
-  let l:breakpoints = l:data[getcwd()]['targets'][g:cmake_target_file]["breakpoints"]
+  let l:breakpoints = l:data[getcwd()]['targets'][s:get_cmake_target_file()]["breakpoints"]
   if has_key(l:breakpoints, a:break_string)
     let l:breakpoints[a:break_string]["enabled"] = !l:breakpoints[a:break_string]["enabled"]
   else
@@ -757,8 +770,8 @@ function! s:start_nvim_dap_lldb_vscode(job_id, exit_code, event)
   let l:data = s:get_cache_file()
   if has_key(l:data, getcwd())
     let l:dir = l:data[getcwd()]['targets']
-    if has_key(l:dir, s:get_build_dir() . '/' . g:cmake_target_file)
-      let l:target = l:dir[s:get_build_dir() . '/' . g:cmake_target_file]
+    if has_key(l:dir, s:get_build_dir() . '/' . s:get_cmake_target_file())
+      let l:target = l:dir[s:get_build_dir() . '/' . s:get_cmake_target_file()]
       if has_key(l:target, 'breakpoints')
         let l:breakpoints = l:target['breakpoints']
         for b in l:breakpoints
@@ -782,8 +795,8 @@ function! s:start_nvim_dap_lldb_vscode(job_id, exit_code, event)
   else
     let l:lldb_init_arg = ''
   endif
-  exec 'DebugLldb ' . g:cmake_target_file . ' --lldbinit ' . l:lldb_init_arg . ' -- ' . g:current_target_args
-  " exec 'DebugLldb ' . g:cmake_target_file . l:lldb_init_arg . ' -- ' . g:current_target_args
+  exec 'DebugLldb ' . s:get_cmake_target_file() . ' --lldbinit ' . l:lldb_init_arg . ' -- ' . g:current_target_args
+  " exec 'DebugLldb ' . s:get_cmake_target_file() . l:lldb_init_arg . ' -- ' . g:current_target_args
 endfunction
 
 function! s:cmake_debug_current_target_nvim_dap_lldb_vscode()
@@ -806,7 +819,7 @@ function! s:cmake_debug_current_target()
 endfunction
 
 function! s:_do_debug_current_target()
-  if g:cmake_target_file == v:null || get(g:tar_to_file, g:cmake_target_name, v:null) == v:null
+  if s:get_cmake_target_file() == v:null || get(g:tar_to_file, s:get_cmake_target_name(), v:null) == v:null
     call s:cmake_get_target_and_run_action(g:execs, 's:update_target')
   endif
 
@@ -833,7 +846,7 @@ function! g:GetCMakeArgs()
 endfunction
 
 function! s:cmake_set_current_target_run_args(args)
-  if g:cmake_target_file ==? ''
+  if s:get_cmake_target_file() ==? ''
     call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
     return
   endif
@@ -860,10 +873,10 @@ endfunction
 
 function! s:get_target_cache()
   let c = s:get_targets_cache()
-  if !has_key(c, g:cmake_target_file)
-    let c[g:cmake_target_file] = {}
+  if !has_key(c, s:get_cmake_target_file())
+    let c[s:get_cmake_target_file()] = {}
   endif
-  return c[g:cmake_target_file]
+  return c[s:get_cmake_target_file()]
 endfunction
 
 function! s:cmake_create_file(...)
