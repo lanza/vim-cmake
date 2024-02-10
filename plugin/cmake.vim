@@ -1,6 +1,6 @@
 " cmake.vim - Vim plugin to create a CMake project system
 " Maintainer: Nathan Lanza <https://github.com/lanza>
-" Version:    0.1
+" Version:    0.2
 
 if exists('g:loaded_vim_cmake')
   finish
