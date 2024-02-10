@@ -936,8 +936,6 @@ endfunction
 
 function! s:cmake_update_build_dir(...)
   let dir = a:1
-  let c = s:get_cmake_dir_cache_object() " don't touch
-  let c['build_dir'] = dir
   call s:set_cmake_build_dir(dir)
   call s:write_cache_file()
 endfunction
