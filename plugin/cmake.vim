@@ -246,8 +246,9 @@ function s:initialize_cache_file()
   call s:set_if_empty(l:dco, "cmake_arguments", [])
   call s:set_if_empty(l:dco, "build_dir", g:state.default_build_dir)
   call s:set_if_empty(l:dco, "source_dir", ".")
-
   call s:set_if_empty(l:dco, "targets", {})
+
+  " initialize current target cache object
   call s:set_if_empty(l:dco, "current_target_file", v:null)
 
   if l:dco.current_target_file
