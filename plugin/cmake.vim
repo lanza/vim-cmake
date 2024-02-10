@@ -203,6 +203,11 @@ function! s:initialize_cache_file()
   else
     let g:state.default_build_dir = "build"
   end
+  if exists("g:cmake_extra_lit_args")
+    let g:state.extra_lit_args = g:cmake_extra_lit_args
+  else
+    let g:state.extra_lit_args = "-a"
+  endif
 
   " load cache file from disk
   if filereadable(g:state.cache_file_path)
@@ -975,10 +980,6 @@ function s:get_build_tools(...)
   return ["vim-dispatch", "vsplit", "Makeshift", "make", "job"]
 endfunction
 
-if !exists("g:cmake_extra_lit_args")
-  let g:cmake_extra_lit_args = "-a"
-endif
-
 function s:run_lit_on_file()
   let l:full_path = expand("%:p")
   if filereadable(s:get_cmake_build_dir() . "/bin/llvm-lit")
@@ -987,7 +988,7 @@ function s:run_lit_on_file()
     let l:lit_path = "llvm-lit"
   endif
   call s:get_only_window()
-  call termopen([l:lit_path, g:cmake_extra_lit_args, l:full_path])
+  call termopen([l:lit_path, s:get_state().extra_lit_args, l:full_path])
 endfunction
 
 function s:cmake_load()
