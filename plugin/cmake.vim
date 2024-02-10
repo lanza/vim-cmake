@@ -46,6 +46,7 @@ let g:state = {
     \ "cmake_tool": "cmake",
     \ "cache_file_path": $HOME . '/.vim_cmake.json',
     \ "cache_object": v:null,
+    \ "dir_cache_object": v:null,
     \ }
 
 function s:get_cmake_target_file()
@@ -115,6 +116,8 @@ function! s:initialize_cache_file()
   else
     call s:set_cmake_cache_file(s:decode_json('{}'))
   endif
+
+  let g:state.dir_cache_object = get(s:get_cmake_cache_file(), getcwd(), {})
 endfunction
 
 function! g:CMake_get_cache_file()
@@ -207,13 +210,11 @@ endfunction
 
 call s:initialize_cache_file()
 
-let s:cwd = get(s:get_cmake_cache_file(), getcwd(), {})
+call s:set_cmake_target_file(get(g:state.dir_cache_object, "current_target_file", v:null))
+call s:set_cmake_target_relative(get(g:state.dir_cache_object, "current_target_relative", v:null))
+call s:set_cmake_target_name(get(g:state.dir_cache_object, "current_target_name", v:null))
 
-call s:set_cmake_target_file(get(s:cwd, "current_target_file", v:null))
-call s:set_cmake_target_relative(get(s:cwd, "current_target_relative", v:null))
-call s:set_cmake_target_name(get(s:cwd, "current_target_name", v:null))
-
-call s:set_cmake_build_dir(get(s:cwd, "build_dir", "build"))
+call s:set_cmake_build_dir(get(g:state.dir_cache_object, "build_dir", "build"))
 
 try
   call s:set_current_target_args(s:get_cmake_cache_file()[getcwd()]["targets"][s:get_cmake_target_file()].args)
