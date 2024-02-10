@@ -63,37 +63,37 @@ endif
 
 let g:cmake_tool = 'cmake'
 
-call s:set_cmake_target_file(v:null)
 function s:get_cmake_target_file()
   return g:cmake_target_file
 endfunction
 function s:set_cmake_target_file(value)
   let g:cmake_target_file = a:value
 endfunction
+call s:set_cmake_target_file(v:null)
 
-call s:set_cmake_target_relative(v:null)
 function s:get_cmake_target_relative()
   return g:cmake_target_relative
 endfunction
 function s:set_cmake_target_relative(value)
   let g:cmake_target_relative = a:value
 endfunction
+call s:set_cmake_target_relative(v:null)
 
-call s:set_cmake_target_name(v:null)
 function s:get_cmake_target_name()
   return g:cmake_target_name
 endfunction
 function s:set_cmake_target_name(value)
   let g:cmake_target_name = a:value
 endfunction
+call s:set_cmake_target_name(v:null)
 
-call s:set_current_target_args('')
 function s:get_current_target_args()
   return g:current_target_args
 endfunction
 function s:set_current_target_args(value)
   let g:current_target_args = a:value
 endfunction
+call s:set_current_target_args('')
 
 let g:cmake_arguments = []
 
