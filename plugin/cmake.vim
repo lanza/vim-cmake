@@ -506,11 +506,7 @@ function s:_build_all_with_completion(completion)
 
 endfunction
 
-function! s:save_cache_file()
-  call s:update_cache_file()
-endfunction
-
-function! s:update_cache_file()
+function! s:write_cache_file()
   let cache = s:get_cmake_cache_file()
   let serial = s:encode_json(cache)
   let split = split(serial, '\n')
@@ -623,7 +619,7 @@ function! s:update_target(target)
     let cache[getcwd()]["targets"][s:get_cmake_target_file()] = l:target
   endif
 
-  call s:update_cache_file()
+  call s:write_cache_file()
 endfunction
 
 function! s:dump_current_target()
@@ -799,7 +795,7 @@ function! s:toggle_breakpoint(break_string)
         \ "enabled": v:true
         \ }
   endif
-  call s:save_cache_file()
+  call s:write_cache_file()
 endfunction
 
 " TODO: Fix this breakpoint handling
@@ -878,7 +874,7 @@ function! s:cmake_set_cmake_args(...)
   call s:set_cmake_arguments(a:000)
   let c = s:get_cmake_dir_cache_object()
   let c['cmake_args'] = a:000
-  call s:update_cache_file()
+  call s:write_cache_file()
 endfunction
 
 function! g:GetCMakeArgs()
@@ -894,7 +890,7 @@ function! s:cmake_set_current_target_run_args(args)
   let c = s:get_target_cache()
   let c['args'] = s
   call s:get_current_target_args(s)
-  call s:update_cache_file()
+  call s:write_cache_file()
   call s:dump_current_target()
 endfunction
 
@@ -943,14 +939,14 @@ function! s:cmake_update_build_dir(...)
   let c = s:get_cmake_dir_cache_object() " don't touch
   let c['build_dir'] = dir
   call s:set_cmake_build_dir(dir)
-  call s:update_cache_file()
+  call s:write_cache_file()
 endfunction
 
 function! s:cmake_update_source_dir(...)
   let dir = a:1
   let c = s:get_cmake_dir_cache_object() " don't touch
   let c['source_dir'] = dir
-  call s:update_cache_file()
+  call s:write_cache_file()
 endfunction
 
 function! s:get_cmake_dir_cache_object()
