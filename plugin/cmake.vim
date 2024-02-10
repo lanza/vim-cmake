@@ -49,6 +49,10 @@ function s:set_if_empty(object, key, val)
   return a:object[a:key]
 endfunction
 
+function s:get_name_relative_pairs()
+  return g:state.dir_cache_object.name_relative_pairs
+endfunction
+
 let g:state = {
     \ "cmake_tool": "cmake",
     \ "cache_file_path": $HOME . '/.vim_cmake.json',
@@ -255,7 +259,7 @@ function s:initialize_cache_file()
   call s:set_if_empty(l:dco, "build_dir", g:state.default_build_dir)
   call s:set_if_empty(l:dco, "source_dir", ".")
   call s:set_if_empty(l:dco, "targets", {})
-  call s:set_if_empty(l:cdo, "name_relative_pairs", [])
+  call s:set_if_empty(l:dco, "name_relative_pairs", [])
 
   " initialize current target cache object
   call s:set_if_empty(l:dco, "current_target_file", v:null)
@@ -265,10 +269,6 @@ function s:initialize_cache_file()
   else
     let g:state.current_target_cache_object = v:null
   endif
-endfunction
-
-function g:get_name_reltative_pairs()
-  return g:state.dir_cache_object.name_relative_pairs
 endfunction
 
 function g:CMake_get_cache_file()
@@ -632,10 +632,10 @@ function s:cmake_run_target_with_name(target)
   endtry
 endfunction
 
-function s:cmake_get_target_and_run_action(target_list, action)
+function s:cmake_get_target_and_run_action(name_relative_pairs, action)
   " echom "s:cmake_get_target_and_run_action([" . join(a:target_list, ",")  . "], " . a:action . ")"
   let l:names = []
-  for target in a:target_list
+  for target in a:name_relative_pairs
     let l:name = keys(target)[0]
     call add(l:names, l:name)
   endfor
