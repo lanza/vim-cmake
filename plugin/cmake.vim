@@ -42,7 +42,7 @@ function! s:encode_json(object) abort
   endif
 endfunction
 
-let g:cmake_state = {
+let g:state = {
     \ "cmake_tool": "cmake",
     \ "cache_object": {},
     \ "cache_file_path": $HOME . '/.vim_cmake.json',
