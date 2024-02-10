@@ -87,7 +87,14 @@ function s:set_cmake_target_name(value)
   let g:cmake_target_name = a:value
 endfunction
 
-let g:current_target_args = ''
+call s:set_current_target_args('')
+function s:get_current_target_args()
+  return g:current_target_args
+endfunction
+function s:set_current_target_args(value)
+  let g:current_target_args = a:value
+endfunction
+
 let g:cmake_arguments = []
 
 if !exists("g:cmake_template_file")
@@ -210,9 +217,9 @@ call s:set_cmake_target_name(get(s:cwd, "current_target_name", v:null))
 let g:cmake_build_dir = get(s:cwd, "build_dir", "build")
 
 try
-  let g:current_target_args = g:cmake_cache_file[getcwd()]["targets"][s:get_cmake_target_file()].args
+  call s:set_current_target_args(g:cmake_cache_file[getcwd()]["targets"][s:get_cmake_target_file()].args)
 catch /.*/
-  let g:current_target_args = ''
+  call s:set_current_target_args('')
 endtry
 try
   let g:cmake_arguments = g:cmake_cache_file[getcwd()]["cmake_args"]
@@ -524,7 +531,7 @@ function! s:_run_current_target(job_id, exit_code, event)
   call s:close_last_window_if_open()
   if a:exit_code == 0
     call s:get_only_window()
-    exe "terminal \"" . s:get_cmake_target_file() . "\" " . g:current_target_args
+    exe "terminal \"" . s:get_cmake_target_file() . "\" " . s:get_current_target_args()
   endif
   let g:vim_cmake_build_tool = g:vim_cmake_build_tool_old
 endf
@@ -595,7 +602,7 @@ function! s:update_target(target)
 endfunction
 
 function! s:dump_current_target()
-  echo "Current target set to '" . s:get_cmake_target_file() . "' with args '" . g:current_target_args . "'"
+  echo "Current target set to '" . s:get_cmake_target_file() . "' with args '" . s:get_current_target_args() . "'"
 endfunction
 
 function! s:cmake_run_target_with_name(target)
@@ -658,7 +665,7 @@ function! s:start_gdb(job_id, exit_code, event)
   call s:close_last_buffer_if_open()
 
   let l:gdb_init_arg = ' -x /tmp/gdbinitvimcmake '
-  let l:exec = 'GdbStart gdb -q ' . l:gdb_init_arg . ' --args ' . s:get_cmake_target_file() . " " . g:current_target_args
+  let l:exec = 'GdbStart gdb -q ' . l:gdb_init_arg . ' --args ' . s:get_cmake_target_file() . " " . s:get_current_target_args()
   " echom l:exec
   exec l:exec
 endfunction
@@ -699,7 +706,7 @@ function! s:start_lldb(job_id, exit_code, event)
   else
     let l:lldb_init_arg = ''
   endif
-  exec 'GdbStartLLDB lldb ' . s:get_cmake_target_file() . l:lldb_init_arg . ' -- ' . g:current_target_args
+  exec 'GdbStartLLDB lldb ' . s:get_cmake_target_file() . l:lldb_init_arg . ' -- ' . s:get_current_target_args()
 endfunction
 
 function! s:toggle_file_line_column_breakpoint()
@@ -804,8 +811,7 @@ function! s:start_nvim_dap_lldb_vscode(job_id, exit_code, event)
   else
     let l:lldb_init_arg = ''
   endif
-  exec 'DebugLldb ' . s:get_cmake_target_file() . ' --lldbinit ' . l:lldb_init_arg . ' -- ' . g:current_target_args
-  " exec 'DebugLldb ' . s:get_cmake_target_file() . l:lldb_init_arg . ' -- ' . g:current_target_args
+  exec 'DebugLldb ' . s:get_cmake_target_file() . ' --lldbinit ' . l:lldb_init_arg . ' -- ' . s:get_current_target_args()
 endfunction
 
 function! s:cmake_debug_current_target_nvim_dap_lldb_vscode()
@@ -862,7 +868,7 @@ function! s:cmake_set_current_target_run_args(args)
   let s = a:args
   let c = s:get_target_cache()
   let c['args'] = s
-  let g:current_target_args = s
+  call s:get_current_target_args(s)
   call s:update_cache_file()
   call s:dump_current_target()
 endfunction
