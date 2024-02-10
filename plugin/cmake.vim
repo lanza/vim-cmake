@@ -44,8 +44,8 @@ endfunction
 
 let g:state = {
     \ "cmake_tool": "cmake",
-    \ "cache_object": {},
     \ "cache_file_path": $HOME . '/.vim_cmake.json',
+    \ "cache_object": v:null,
     \ }
 
 function s:get_cmake_target_file()
