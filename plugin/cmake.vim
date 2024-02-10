@@ -159,7 +159,6 @@ function s:_do_parse_codemodel_json()
 
 
   let g:execs = []
-  let g:tars = []
 
   let g:tar_to_file = {}
 
@@ -177,11 +176,11 @@ function s:_do_parse_codemodel_json()
       if l:type ==? 'Executable'
         call add(g:execs, {l:name : l:path})
       endif
-      call add(g:tars, {l:name : l:path})
+      call add(s:get_name_relative_pairs(), {l:name : l:path})
       let g:tar_to_file[l:name] = l:path
     else
       let l:type = l:target_file_data['type']
-      call add(g:tars , {l:name : ""})
+      call add(s:get_name_relative_pairs() , {l:name : ""})
     endif
   endfor
   return 1
@@ -256,6 +255,7 @@ function s:initialize_cache_file()
   call s:set_if_empty(l:dco, "build_dir", g:state.default_build_dir)
   call s:set_if_empty(l:dco, "source_dir", ".")
   call s:set_if_empty(l:dco, "targets", {})
+  call s:set_if_empty(l:cdo, "name_relative_pairs", [])
 
   " initialize current target cache object
   call s:set_if_empty(l:dco, "current_target_file", v:null)
@@ -265,6 +265,10 @@ function s:initialize_cache_file()
   else
     let g:state.current_target_cache_object = v:null
   endif
+endfunction
+
+function g:get_name_reltative_pairs()
+  return g:state.dir_cache_object.name_relative_pairs
 endfunction
 
 function g:CMake_get_cache_file()
@@ -417,7 +421,7 @@ endfunction
 
 function s:_do_build_current_target_with_completion(completion)
   if s:get_cmake_target_file() == v:null
-    call s:cmake_get_target_and_run_action(g:tars, 's:_update_target_and_build')
+    call s:cmake_get_target_and_run_action(s:get_name_relative_pairs(), 's:_update_target_and_build')
     return
   endif
 
@@ -546,7 +550,7 @@ function s:_do_cmake_pick_executable_target()
 endfunction
 
 function s:_do_cmake_pick_target()
-  call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
+  call s:cmake_get_target_and_run_action(s:get_name_relative_pairs(), 's:update_target')
   call s:dump_current_target()
 endfunction
 
@@ -872,7 +876,7 @@ endfunction
 
 function s:cmake_set_current_target_run_args(args)
   if s:get_cmake_target_file() ==? v:null
-    call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
+    call s:cmake_get_target_and_run_action(s:get_name_relative_pairs(), 's:update_target')
     return
   endif
   call s:set_cmake_target_args(a:args)
