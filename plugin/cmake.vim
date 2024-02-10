@@ -545,12 +545,12 @@ function s:cmake_pick_executable_target()
 endf
 
 function s:_do_cmake_pick_executable_target()
-  call s:cmake_get_target_and_run_action(g:execs, 's:update_target')
+  call s:cmake_get_target_and_run_action(g:execs, 's:select_target')
   call s:dump_current_target()
 endfunction
 
 function s:_do_cmake_pick_target()
-  call s:cmake_get_target_and_run_action(s:get_name_relative_pairs(), 's:update_target')
+  call s:cmake_get_target_and_run_action(s:get_name_relative_pairs(), 's:select_target')
   call s:dump_current_target()
 endfunction
 
