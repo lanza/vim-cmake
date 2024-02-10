@@ -922,10 +922,6 @@ function! s:get_cmake_dir_cache_object()
   return g:state.dir_cache_object
 endfunction
 
-function! s:get_cmake_source_dir()
-  return g:state.dir_cache_object.source_dir
-endfunction
-
 function g:GetCMakeSourceDir()
   return s:get_cmake_source_dir()
 endfunction
