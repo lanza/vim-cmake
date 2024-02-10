@@ -103,6 +103,13 @@ function s:get_cmake_arguments()
 endfunction
 call s:set_cmake_arguments([])
 
+function s:get_cmake_build_dir()
+  return g:cmake_build_dir
+endfunction
+function s:set_cmake_build_dir(value)
+  let g:cmake_build_dir = a:value
+endfunction
+
 if !exists("g:cmake_template_file")
   let g:cmake_template_file = expand("%:p:h:h" . "/CMakeLists.txt")
 end
@@ -227,7 +234,7 @@ call s:set_cmake_target_file(get(s:cwd, "current_target_file", v:null))
 call s:set_cmake_target_relative(get(s:cwd, "current_target_relative", v:null))
 call s:set_cmake_target_name(get(s:cwd, "current_target_name", v:null))
 
-let g:cmake_build_dir = get(s:cwd, "build_dir", "build")
+call s:set_cmake_build_dir(get(s:cwd, "build_dir", "build"))
 
 try
   call s:set_current_target_args(s:get_cmake_cache_file()[getcwd()]["targets"][s:get_cmake_target_file()].args)
@@ -930,7 +937,7 @@ function! s:cmake_set_build_dir(...)
   let dir = a:1
   let c = s:get_cwd_cache() " don't touch
   let c['build_dir'] = dir
-  let g:cmake_build_dir = dir
+  call s:set_cmake_build_dir(dir)
   call s:update_cache_file()
 endfunction
 
@@ -991,8 +998,8 @@ endif
 
 function s:run_lit_on_file()
   let l:full_path = expand("%:p")
-  if filereadable(g:cmake_build_dir . "/bin/llvm-lit")
-    let l:lit_path = g:cmake_build_dir . "/bin/llvm-lit"
+  if filereadable(s:get_cmake_build_dir() . "/bin/llvm-lit")
+    let l:lit_path = s:get_cmake_build_dir() . "/bin/llvm-lit"
   else
     let l:lit_path = "llvm-lit"
   endif
