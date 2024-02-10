@@ -59,17 +59,17 @@ function s:set_cmake_target_file(value)
 endfunction
 
 function s:get_cmake_target_relative()
-  return g:cmake_target_relative
+  return g:state.dir_cache_object.current_target_relative
 endfunction
 function s:set_cmake_target_relative(value)
-  let g:cmake_target_relative = a:value
+  let g:state.dir_cache_object.current_target_relative = a:value
 endfunction
 
 function s:get_cmake_target_name()
-  return g:cmake_target_name
+  return g:state.dir_cache_object.current_target_name
 endfunction
 function s:set_cmake_target_name(value)
-  let g:cmake_target_name = a:value
+  let g:state.dir_cache_object.current_target_name = a:value
 endfunction
 
 function s:get_current_target_args()
@@ -214,7 +214,7 @@ function! s:initialize_cache_file()
   if !has_key(l:dco, "current_target_relative")
     let l:dco.current_target_relative = v:null
   endif
-  if !has_key(l:dco, "current_target_relative")
+  if !has_key(l:dco, "current_target_name")
     let l:dco.current_target_name = v:null
   endif
 
