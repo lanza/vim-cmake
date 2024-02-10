@@ -46,6 +46,7 @@ let g:state = {
     \ "cmake_tool": "cmake",
     \ "cache_file_path": $HOME . '/.vim_cmake.json',
     \ "generator": 'Ninja',
+    \ "template_file": expand(":p:h:h" . "/CMakeLists.txt"),
     \ "cache_object": v:null,
     \ "dir_cache_object": v:null,
     \ }
@@ -91,10 +92,6 @@ endfunction
 function s:set_cmake_build_dir(value)
   let g:cmake_build_dir = a:value
 endfunction
-
-if !exists("g:cmake_template_file")
-  let g:cmake_template_file = expand("%:p:h:h" . "/CMakeLists.txt")
-end
 
 function s:get_cmake_cache_file()
   return g:state.cache_object
@@ -193,6 +190,11 @@ endfunction
 
 
 function! s:initialize_cache_file()
+  " initialize some variables
+  if exists("g:cmake_template_file")
+    let g:state.template_file = g:cmake_template_file
+  end
+
   " load cache file from disk
   if filereadable(g:state.cache_file_path)
     let l:contents = readfile(g:state.cache_file_path)
