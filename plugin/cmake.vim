@@ -107,6 +107,13 @@ if !exists("g:cmake_template_file")
   let g:cmake_template_file = expand("%:p:h:h" . "/CMakeLists.txt")
 end
 
+function s:get_cmake_cache_file()
+  return g:cmake_cache_file
+endfunction
+function s:set_cmake_cache_file(value)
+  let g:cmake_cache_file = a:value
+endfunction
+
 function! s:get_cache_file()
   if exists('g:cmake_cache_file')
     return g:cmake_cache_file
@@ -116,9 +123,9 @@ function! s:get_cache_file()
     let l:contents = readfile(g:vim_cmake_cache_file_path)
     let l:json_string = join(l:contents, "\n")
 
-    let g:cmake_cache_file = s:decode_json(l:json_string)
+    call s:set_cmake_cache_file(s:decode_json(l:json_string))
   else
-    let g:cmake_cache_file = s:decode_json('{}')
+    call s:set_cmake_cache_file(s:decode_json('{}'))
   endif
   return g:cmake_cache_file
 endfunction
@@ -211,10 +218,10 @@ function! s:parse_codemodel_json_with_completion(completion)
   endif
 endfunction
 
-let g:cmake_cache_file = s:get_cache_file()
+call s:set_cmake_cache_file(s:get_cache_file())
 
 " this shouldn't be here...
-let s:cwd = s:find_current_dir_or_parent_in_cache_file(g:cmake_cache_file)
+let s:cwd = s:find_current_dir_or_parent_in_cache_file(s:get_cmake_cache_file())
 
 call s:set_cmake_target_file(get(s:cwd, "current_target_file", v:null))
 call s:set_cmake_target_relative(get(s:cwd, "current_target_relative", v:null))
@@ -223,12 +230,12 @@ call s:set_cmake_target_name(get(s:cwd, "current_target_name", v:null))
 let g:cmake_build_dir = get(s:cwd, "build_dir", "build")
 
 try
-  call s:set_current_target_args(g:cmake_cache_file[getcwd()]["targets"][s:get_cmake_target_file()].args)
+  call s:set_current_target_args(s:get_cmake_cache_file()[getcwd()]["targets"][s:get_cmake_target_file()].args)
 catch /.*/
   call s:set_current_target_args('')
 endtry
 try
-  call s:set_cmake_arguments(g:cmake_cache_file[getcwd()]["cmake_args"])
+  call s:set_cmake_arguments(s:get_cmake_cache_file()[getcwd()]["cmake_args"])
 catch /.*/
   call s:set_cmake_arguments([])
 endtry
