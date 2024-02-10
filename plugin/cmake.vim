@@ -73,24 +73,24 @@ function s:set_cmake_target_name(value)
 endfunction
 
 function s:get_current_target_args()
-  return g:current_target_args
+  return g:state.dir_cache_object.current_target_args
 endfunction
 function s:set_current_target_args(value)
-  let g:current_target_args = a:value
+  let g:state.dir_cache_object.current_target_args = a:value
 endfunction
 
 function s:set_cmake_arguments(value)
-  let g:cmake_arguments = a:value
+  let g:state.dir_cache_object.cmake_arguments = a:value
 endfunction
 function s:get_cmake_arguments()
-  return g:cmake_arguments
+  return g:state.dir_cache_object.cmake_arguments
 endfunction
 
 function s:get_cmake_build_dir()
-  return g:state.build_dir
+  return g:state.dir_cache_object.build_dir
 endfunction
 function s:set_cmake_build_dir(value)
-  let g:state.build_dir = a:value
+  let g:state.dir_cache_object.build_dir = a:value
 endfunction
 
 function s:get_cmake_cache_file()
