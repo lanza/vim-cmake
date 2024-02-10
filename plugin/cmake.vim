@@ -63,19 +63,28 @@ endif
 
 let g:cmake_tool = 'cmake'
 
-let g:cmake_target_file = v:null
+call s:set_cmake_target_file(v:null)
 function s:get_cmake_target_file()
   return g:cmake_target_file
 endfunction
+function s:set_cmake_target_file(value)
+  let g:cmake_target_file = a:value
+endfunction
 
-let g:cmake_target_relative = v:null
+call s:set_cmake_target_relative(v:null)
 function s:get_cmake_target_relative()
   return g:cmake_target_relative
 endfunction
+function s:set_cmake_target_relative(value)
+  let g:cmake_target_relative = a:value
+endfunction
 
-let g:cmake_target_name = v:null
+call s:set_cmake_target_name(v:null)
 function s:get_cmake_target_name()
   return g:cmake_target_name
+endfunction
+function s:set_cmake_target_name(value)
+  let g:cmake_target_name = a:value
 endfunction
 
 let g:current_target_args = ''
@@ -194,9 +203,9 @@ let g:cmake_cache_file = s:get_cache_file()
 " this shouldn't be here...
 let s:cwd = s:find_current_dir_or_parent_in_cache_file(g:cmake_cache_file)
 
-let g:cmake_target_file = get(s:cwd, "current_target_file", v:null)
-let g:cmake_target_relative = get(s:cwd, "current_target_relative", v:null)
-let g:cmake_target_name = get(s:cwd, "current_target_name", v:null)
+call s:set_cmake_target_file(get(s:cwd, "current_target_file", v:null))
+call s:set_cmake_target_relative(get(s:cwd, "current_target_relative", v:null))
+call s:set_cmake_target_name(get(s:cwd, "current_target_name", v:null))
 
 let g:cmake_build_dir = get(s:cwd, "build_dir", "build")
 
@@ -548,13 +557,13 @@ function! s:cmake_run_current_target()
 endfunction
 
 function! s:update_target(target)
-  let g:cmake_target_name = a:target
+  call s:set_cmake_target_name(a:target)
   if has_key(g:tar_to_file, a:target)
-    let g:cmake_target_relative = g:tar_to_file[a:target]
-    let g:cmake_target_file = s:get_build_dir() . '/' . g:tar_to_file[a:target]
+    call s:set_cmake_target_relative(g:tar_to_file[a:target])
+    call s:set_cmake_target_file(s:get_build_dir() . '/' . g:tar_to_file[a:target])
   else
-    let g:cmake_target_relative = v:null
-    let g:cmake_target_file = v:null
+    call s:set_cmake_target_relative(v:null)
+    call s:set_cmake_target_file(v:null)
   end
 
   let cache = s:get_cache_file()
