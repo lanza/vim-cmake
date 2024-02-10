@@ -198,6 +198,11 @@ function! s:initialize_cache_file()
   if exists("g:cmake_template_file")
     let g:state.template_file = g:cmake_template_file
   end
+  if exists("g:cmake_default_build_dir")
+    let g:state.default_build_dir = g:cmake_default_build_dir
+  else
+    let g:state.default_build_dir = "build"
+  end
 
   " load cache file from disk
   if filereadable(g:state.cache_file_path)
@@ -222,7 +227,7 @@ function! s:initialize_cache_file()
   call s:set_if_empty(l:dco, "current_target_name", v:null)
   call s:set_if_empty(l:dco, "current_target_args", '')
   call s:set_if_empty(l:dco, "cmake_arguments", [])
-  call s:set_if_empty(l:dco, "build_dir", "build")
+  call s:set_if_empty(l:dco, "build_dir", g:state.default_build_dir)
   call s:set_if_empty(l:dco, "targets", {})
 endfunction
 
