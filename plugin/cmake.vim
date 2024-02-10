@@ -49,6 +49,10 @@ function s:set_if_empty(object, key, val)
   return a:object[a:key]
 endfunction
 
+function s:get_cmake_targets_object()
+  return g:state.dir_cache_object.targets
+endfunctio
+
 function s:get_name_relative_pairs()
   return s:get_cmake_dir_cache_object().name_relative_pairs
 endfunction
@@ -61,6 +65,10 @@ let g:state = {
     \ "cache_object": v:null,
     \ "dir_cache_object": v:null,
     \ }
+
+function s:get_cmake_dir_cache_object()
+  return g:state.dir_cache_object
+endfunction
 
 function s:get_cmake_target_file()
   return s:get_cmake_dir_cache_object().current_target_file
@@ -903,10 +911,6 @@ function g:GetCMakeCurrentTargetRunArgs()
   return c.args
 endfunction
 
-function s:get_cmake_targets_object()
-  return g:state.dir_cache_object.targets
-endfunction
-
 function s:get_cmake_single_target_cache()
   let c = s:get_cmake_targets_object()
   call s:set_if_empty(c, s:get_cmake_target_file(), {})
@@ -942,10 +946,6 @@ function s:cmake_update_source_dir(...)
   let dir = a:1
   call s:set_cmake_source_dir(dir)
   call s:write_cache_file()
-endfunction
-
-function s:get_cmake_dir_cache_object()
-  return g:state.dir_cache_object
 endfunction
 
 function g:GetCMakeSourceDir()
