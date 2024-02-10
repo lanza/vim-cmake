@@ -162,7 +162,6 @@ function s:_do_parse_codemodel_json()
   let l:targets_dicts = l:first_config['targets']
 
 
-  let g:execs = []
   let g:state.dir_cache_object.name_relative_pairs = []
 
   let g:tar_to_file = {}
@@ -178,14 +177,21 @@ function s:_do_parse_codemodel_json()
       let l:artifact = l:artifacts[0]
       let l:path = l:artifact['path']
       let l:type = l:target_file_data['type']
-      if l:type ==? 'Executable'
-        call add(g:execs, {l:name : l:path})
-      endif
-      call add(s:get_name_relative_pairs(), {l:name : l:path})
+      let l:is_exec = l:type ==? "Executable"
+      call add(s:get_name_relative_pairs(), {
+            \ "name": l:name,
+            \ "relative" : l:path,
+            \ "is_exec": l:is_exec,
+            \ "is_artifact": v:true
+            \ })
       let g:tar_to_file[l:name] = l:path
     else
       let l:type = l:target_file_data['type']
-      call add(s:get_name_relative_pairs() , {l:name : ""})
+      call add(s:get_name_relative_pairs() , {
+            \ "name": l:name,
+            \ "is_exec": v:false,
+            \ "is_artifact": v:false,
+            \ })
     endif
   endfor
   return 1
@@ -545,8 +551,12 @@ function s:cmake_pick_executable_target()
   call s:parse_codemodel_json_with_completion(function('s:_do_cmake_pick_executable_target'))
 endf
 
+function s:get_execs_from_name_relative_pairs()
+  let l:filtered = filter(s:get_name_relative_pairs(), "v:val.is_exec")
+endfunction
+
 function s:_do_cmake_pick_executable_target()
-  call s:cmake_get_target_and_run_action(g:execs, 's:select_target')
+  call s:cmake_get_target_and_run_action(s:get_execs_from_name_relative_pairs(), 's:select_target')
   call s:dump_current_target()
 endfunction
 
@@ -591,7 +601,7 @@ function s:_do_run_current_target()
   " echom "_do_run_current_target() with s:get_cmake_target_file() = " . s:get_cmake_target_file()
   if s:get_cmake_target_file() == '' || s:get_cmake_target_file() == v:null
     " because vimscript doesn't have asynch the below just recursively calls this
-    call s:cmake_get_target_and_run_action(g:execs, 's:_update_target_and_run')
+    call s:cmake_get_target_and_run_action(s:get_execs_from_name_relative_pairs(), 's:_update_target_and_run')
     return
   endif
   if g:vim_cmake_build_tool != "vsplit"
@@ -637,7 +647,7 @@ function s:cmake_get_target_and_run_action(name_relative_pairs, action)
   " echom "s:cmake_get_target_and_run_action([" . join(a:target_list, ",")  . "], " . a:action . ")"
   let l:names = []
   for target in a:name_relative_pairs
-    let l:name = keys(target)[0]
+    let l:name = target.name
     call add(l:names, l:name)
   endfor
 
@@ -851,7 +861,7 @@ endfunction
 
 function s:_do_debug_current_target()
   if s:get_cmake_target_file() == v:null || get(g:tar_to_file, s:get_cmake_target_name(), v:null) == v:null
-    call s:cmake_get_target_and_run_action(g:execs, 's:update_target')
+    call s:cmake_get_target_and_run_action(s:get_execs_from_namae_relative_pairs(), 's:update_target')
   endif
 
   if exists('g:vim_cmake_debugger')
