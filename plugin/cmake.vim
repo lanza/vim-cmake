@@ -56,7 +56,6 @@ endfunction
 function s:set_cmake_target_file(value)
   let g:state.dir_cache_object.current_target_file = a:value
 endfunction
-call s:set_cmake_target_file(v:null)
 
 function s:get_cmake_target_relative()
   return g:cmake_target_relative
@@ -64,7 +63,6 @@ endfunction
 function s:set_cmake_target_relative(value)
   let g:cmake_target_relative = a:value
 endfunction
-call s:set_cmake_target_relative(v:null)
 
 function s:get_cmake_target_name()
   return g:cmake_target_name
@@ -72,7 +70,6 @@ endfunction
 function s:set_cmake_target_name(value)
   let g:cmake_target_name = a:value
 endfunction
-call s:set_cmake_target_name(v:null)
 
 function s:get_current_target_args()
   return g:current_target_args
@@ -80,7 +77,6 @@ endfunction
 function s:set_current_target_args(value)
   let g:current_target_args = a:value
 endfunction
-call s:set_current_target_args('')
 
 function s:set_cmake_arguments(value)
   let g:cmake_arguments = a:value
@@ -88,7 +84,6 @@ endfunction
 function s:get_cmake_arguments()
   return g:cmake_arguments
 endfunction
-call s:set_cmake_arguments([])
 
 function s:get_cmake_build_dir()
   return g:cmake_build_dir
@@ -219,6 +214,13 @@ function! s:initialize_cache_file()
   if !has_key(l:dco, "current_target_file")
     let l:dco.current_target_file = v:null
   endif
+  " maintain old global vars representing state
+  call s:set_cmake_target_file(v:null)
+  call s:set_cmake_target_relative(v:null)
+  call s:set_cmake_target_name(v:null)
+  call s:set_current_target_args('')
+  call s:set_cmake_arguments([])
+endfunction
 call s:initialize_cache_file()
 
 call s:set_cmake_target_file(get(g:state.dir_cache_object, "current_target_file", v:null))
