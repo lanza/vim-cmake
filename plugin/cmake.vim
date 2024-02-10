@@ -271,7 +271,7 @@ function s:initialize_cache_file()
   " initialize current target cache object
   call s:set_if_empty(l:dco, "current_target_file", v:null)
 
-  if has_key(l:dco, "current_target_file")
+  if l:dco.current_target_file != v:null
     let g:state.current_target_cache_object = l:dco.targets[l:dco.current_target_file]
   else
     let g:state.current_target_cache_object = v:null
