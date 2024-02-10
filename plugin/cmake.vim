@@ -163,6 +163,7 @@ function s:_do_parse_codemodel_json()
 
 
   let g:execs = []
+  let g:state.dir_cache_object.name_relative_pairs = []
 
   let g:tar_to_file = {}
 
