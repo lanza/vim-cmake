@@ -96,7 +96,7 @@ endfunction
 call s:set_current_target_args('')
 
 function s:set_cmake_arguments(value)
-  let g:cmake_arguments = value
+  let g:cmake_arguments = a:value
 endfunction
 function s:get_cmake_arguments()
   return g:cmake_arguments
