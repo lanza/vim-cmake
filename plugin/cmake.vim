@@ -95,7 +95,13 @@ function s:set_current_target_args(value)
 endfunction
 call s:set_current_target_args('')
 
-let g:cmake_arguments = []
+function s:set_cmake_arguments(value)
+  let g:cmake_arguments = value
+endfunction
+function s:get_cmake_arguments()
+  return g:cmake_arguments
+endfunction
+call s:set_cmake_arguments([])
 
 if !exists("g:cmake_template_file")
   let g:cmake_template_file = expand("%:p:h:h" . "/CMakeLists.txt")
@@ -222,9 +228,9 @@ catch /.*/
   call s:set_current_target_args('')
 endtry
 try
-  let g:cmake_arguments = g:cmake_cache_file[getcwd()]["cmake_args"]
+  call s:set_cmake_arguments(g:cmake_cache_file[getcwd()]["cmake_args"])
 catch /.*/
-  let g:cmake_arguments = []
+  call s:set_cmake_arguments([])
 endtry
 
 let g:cmake_generator = 'Ninja'
@@ -251,14 +257,14 @@ endfunction
 function! s:get_cmake_argument_string()
   call s:make_query_files()
   let l:arguments = []
-  let l:arguments += g:cmake_arguments
+  let l:arguments += s:get_cmake_arguments()
   let l:arguments += ['-G ' . g:cmake_generator]
   let l:arguments += ['-DCMAKE_EXPORT_COMPILE_COMMANDS=ON']
 
   let found_source_dir_arg = v:false
   let found_build_dir_arg = v:false
   let found_cmake_build_type = v:false
-  for arg in g:cmake_arguments
+  for arg in s:get_cmake_arguments()
     if (arg =~ "CMAKE_BUILD_TYPE")
       let found_cmake_build_type = v:true
     elseif (arg =~ "-S")
@@ -850,7 +856,7 @@ function! s:_do_debug_current_target()
 endfunction
 
 function! s:cmake_set_cmake_args(...)
-  let g:cmake_arguments = a:000
+  call s:set_cmake_arguments(a:000)
   let c = s:get_cwd_cache()
   let c['cmake_args'] = a:000
   call s:update_cache_file()
