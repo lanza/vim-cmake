@@ -872,7 +872,7 @@ function s:cmake_debug_current_target()
 endfunction
 
 function s:_do_debug_current_target()
-  if s:get_cmake_target_file() == v:null || get(g:tar_to_file, s:get_cmake_target_name(), v:null) == v:null
+  if s:get_cmake_target_file() == v:null
     call s:cmake_get_target_and_run_action(s:get_execs_from_namae_relative_pairs(), 's:update_target')
   endif
 
