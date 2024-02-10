@@ -160,10 +160,8 @@ function s:_do_parse_codemodel_json()
 
   let g:execs = []
   let g:tars = []
-  let g:all_tars = []
 
   let g:tar_to_file = {}
-  let l:file_to_tar = {}
 
   for target in targets_dicts
     let l:jsonFile = target['jsonFile']
@@ -181,10 +179,8 @@ function s:_do_parse_codemodel_json()
       endif
       call add(g:tars, {l:name : l:path})
       let g:tar_to_file[l:name] = l:path
-      let l:file_to_tar[l:path] = l:name
     else
       let l:type = l:target_file_data['type']
-      call add(g:all_tars , {l:name : l:type})
       call add(g:tars , {l:name : ""})
     endif
   endfor
