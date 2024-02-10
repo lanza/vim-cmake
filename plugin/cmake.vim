@@ -211,6 +211,13 @@ function! s:initialize_cache_file()
   if !has_key(l:dco, "current_target_file")
     let l:dco.current_target_file = v:null
   endif
+  if !has_key(l:dco, "current_target_relative")
+    let l:dco.current_target_relative = v:null
+  endif
+  if !has_key(l:dco, "current_target_relative")
+    let l:dco.current_target_name = v:null
+  endif
+
   " maintain old global vars representing state
   call s:set_cmake_target_file(v:null)
   call s:set_cmake_target_relative(v:null)
