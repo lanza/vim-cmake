@@ -243,6 +243,9 @@ function s:initialize_cache_file()
   else
     let g:state.extra_lit_args = "-a"
   endif
+  if exists("g:vim_cmake_debugger")
+    let g:state.debugger = g:vim_cmake_debugger
+  endif
 
   " load cache file from disk
   if filereadable(g:state.cache_file_path)
@@ -841,17 +844,17 @@ function s:start_nvim_dap_lldb_vscode(job_id, exit_code, event)
 endfunction
 
 function s:cmake_debug_current_target_nvim_dap_lldb_vscode()
-  let g:vim_cmake_debugger = 'nvim_dap_lldb_vscode'
+  let s:get_state().debugger = 'nvim_dap_lldb_vscode'
   call s:cmake_debug_current_target()
 endf
 
 function s:cmake_debug_current_target_lldb()
-  let g:vim_cmake_debugger = 'lldb'
+  let s:get_state().debugger = 'lldb'
   call s:cmake_debug_current_target()
 endf
 
 function s:cmake_debug_current_target_gdb()
-  let g:vim_cmake_debugger = 'gdb'
+  let s:get_state().debugger = 'gdb'
   call s:cmake_debug_current_target()
 endf
 
@@ -864,14 +867,12 @@ function s:_do_debug_current_target()
     call s:cmake_get_target_and_run_action(s:get_execs_from_namae_relative_pairs(), 's:update_target')
   endif
 
-  if exists('g:vim_cmake_debugger')
-    if g:vim_cmake_debugger ==? 'gdb'
-      call s:cmake_build_current_target_with_completion(function('s:start_gdb'))
-    elseif g:vim_cmake_debugger ==? 'lldb'
-      call s:cmake_build_current_target_with_completion(function('s:start_lldb'))
-    else
-      call s:cmake_build_current_target_with_completion(function('s:start_nvim_dap_lldb_vscode'))
-    endif
+  if s:get_state().debugger ==? 'gdb'
+    call s:cmake_build_current_target_with_completion(function('s:start_gdb'))
+  elseif s:get_state().debugger ==? 'lldb'
+    call s:cmake_build_current_target_with_completion(function('s:start_lldb'))
+  else
+    call s:cmake_build_current_target_with_completion(function('s:start_nvim_dap_lldb_vscode'))
   endif
 endfunction
 
