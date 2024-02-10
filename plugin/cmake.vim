@@ -9,7 +9,7 @@ else
 endif
 
 
-function! s:decode_json(string) abort
+function s:decode_json(string) abort
   if exists('*json_decode')
     return json_decode(a:string)
   endif
@@ -23,7 +23,7 @@ function! s:decode_json(string) abort
   endif
 endfunction
 
-function! s:encode_json(object) abort
+function s:encode_json(object) abort
   if exists('*json_encode')
     return json_encode(a:object)
   endif
@@ -42,7 +42,7 @@ function! s:encode_json(object) abort
   endif
 endfunction
 
-function! s:set_if_empty(object, key, val)
+function s:set_if_empty(object, key, val)
   if !has_key(a:object, a:key)
     let a:object[a:key] = a:val
   endif
@@ -80,17 +80,17 @@ function s:set_cmake_target_name(value)
   let g:state.current_target_cache_object.current_target_name = a:value
 endfunction
 
-function! s:set_cmake_target_args(value)
+function s:set_cmake_target_args(value)
   let g:state.current_target_cache_object.args = a:value
 endfunction
-function! s:get_cmake_target_args()
+function s:get_cmake_target_args()
   return g:state.current_target_cache_object.args
 endfunction
 
-function! s:set_cmake_target_breakpoints(value)
+function s:set_cmake_target_breakpoints(value)
   let g:state.current_target_cache_object.breakpoints = a:value
 endfunction
-function! s:get_cmake_target_breakpoints()
+function s:get_cmake_target_breakpoints()
   return g:state.current_target_cache_object.breakpoints
 endfunction
 
@@ -101,17 +101,17 @@ function s:get_cmake_arguments()
   return g:state.dir_cache_object.cmake_arguments
 endfunction
 
-function! s:get_cmake_build_dir()
+function s:get_cmake_build_dir()
   return g:state.dir_cache_object.build_dir
 endfunction
-function! s:set_cmake_build_dir(value)
+function s:set_cmake_build_dir(value)
   let g:state.dir_cache_object.build_dir = a:value
 endfunction
 
-function! s:get_cmake_source_dir()
+function s:get_cmake_source_dir()
   return g:state.dir_cache_object.source_dir
 endfunction
-function! s:set_cmake_source_dir(value)
+function s:set_cmake_source_dir(value)
   let g:state.dir_cache_object.source_dir = a:value
 endfunction
 
@@ -127,7 +127,7 @@ function s:get_state()
 endfunction
 
 " this needs to be wrapped due to the need to use on_exit to pipeline the config
-function! s:_do_parse_codemodel_json()
+function s:_do_parse_codemodel_json()
   let l:build_dir = s:get_cmake_build_dir()
   let g:cmake_query_response = l:build_dir . '/.cmake/api/v1/reply/'
   let l:codemodel_file = globpath(g:cmake_query_response, 'codemodel*')
@@ -178,7 +178,7 @@ function! s:_do_parse_codemodel_json()
   return 1
 endf
 
-function! g:Parse_codemodel_json()
+function g:Parse_codemodel_json()
   let l:build_dir = s:get_cmake_build_dir()
   if !isdirectory(l:build_dir . '/.cmake/api/v1/reply')
     echom 'Must configure and generate first'
@@ -187,7 +187,7 @@ function! g:Parse_codemodel_json()
   return s:_do_parse_codemodel_json()
 endfunction
 
-function! s:do_all_completions(...)
+function s:do_all_completions(...)
   for Completion in a:000
     if type(Completion) == v:t_func
       call Completion()
@@ -195,11 +195,11 @@ function! s:do_all_completions(...)
   endfor
 endfunction
 
-function! s:compose_completions(outer, inner)
+function s:compose_completions(outer, inner)
   call a:outer(a:inner)
 endfunction
 
-function! s:parse_codemodel_json_with_completion(completion)
+function s:parse_codemodel_json_with_completion(completion)
   let l:build_dir = s:get_cmake_build_dir()
   if !isdirectory(l:build_dir . '/.cmake/api/v1/reply')
     call s:assure_query_reply_with_completion(function('s:do_all_completions', [function('s:_do_parse_codemodel_json'), a:completion]))
@@ -209,7 +209,7 @@ function! s:parse_codemodel_json_with_completion(completion)
   endif
 endfunction
 
-function! s:initialize_cache_file()
+function s:initialize_cache_file()
   " initialize some variables
   if exists("g:cmake_template_file")
     let g:state.template_file = g:cmake_template_file
@@ -257,13 +257,13 @@ function! s:initialize_cache_file()
   endif
 endfunction
 
-function! g:CMake_get_cache_file()
+function g:CMake_get_cache_file()
   return s:get_cmake_cache_file()
 endfunction
 
 call s:initialize_cache_file()
 
-function! s:make_query_files()
+function s:make_query_files()
   let l:build_dir = s:get_cmake_build_dir()
   if !isdirectory(l:build_dir . '/.cmake/api/v1/query')
     call mkdir(l:build_dir . '/.cmake/api/v1/query', 'p')
@@ -273,7 +273,7 @@ function! s:make_query_files()
   endif
 endfunction
 
-function! s:assure_query_reply_with_completion(completion)
+function s:assure_query_reply_with_completion(completion)
   let l:build_dir = s:get_cmake_build_dir()
   if !isdirectory(l:build_dir . '/.cmake/api/v1/reply')
     call s:cmake_configure_and_generate_with_completion(a:completion)
@@ -282,7 +282,7 @@ function! s:assure_query_reply_with_completion(completion)
   endif
 endfunction
 
-function! s:get_cmake_argument_string()
+function s:get_cmake_argument_string()
   call s:make_query_files()
   let l:arguments = []
   let l:arguments += s:get_cmake_arguments()
@@ -320,7 +320,7 @@ function! s:get_cmake_argument_string()
   return l:command
 endfunction
 
-function! s:cmdb_configure_and_generate()
+function s:cmdb_configure_and_generate()
   exec 'CMDB ' . s:get_cmake_argument_string()
 endfunction
 
@@ -328,7 +328,7 @@ function g:CMake_configure_and_generate()
   call s:cmake_configure_and_generate()
 endfunction
 
-function! s:check_if_window_is_alive(win)
+function s:check_if_window_is_alive(win)
   if index(nvim_list_wins(), a:win) > -1
     return v:true
   else
@@ -336,7 +336,7 @@ function! s:check_if_window_is_alive(win)
   endif
 endfunction
 
-function! s:check_if_buffer_is_alive(buf)
+function s:check_if_buffer_is_alive(buf)
   if index(nvim_list_bufs(), a:buf) > -1
     return v:true
   else
@@ -347,7 +347,7 @@ endfunction
 " close the current window and open a new one
 " This is a hack for now because I don't feel like figuring out how to clean a
 " dirty buffer and termopen refuses to open in a dirty buffer
-function! s:get_only_window()
+function s:get_only_window()
   call s:close_last_window_if_open()
   call s:close_last_buffer_if_open()
   exe "vs | wincmd L | enew"
@@ -355,11 +355,11 @@ function! s:get_only_window()
   let g:cmake_last_buffer = nvim_get_current_buf()
 endfunction
 
-function! s:cmake_configure_and_generate()
+function s:cmake_configure_and_generate()
   call s:cmake_configure_and_generate_with_completion(s:noop)
 endfunction
 
-function! s:cmake_configure_and_generate_with_completion(completion)
+function s:cmake_configure_and_generate_with_completion(completion)
   if !filereadable(s:get_cmake_source_dir() . "/CMakeLists.txt")
     if exists("g:cmake_template_file")
       silent exec "! cp " . g:cmake_template_file . " " . s:get_cmake_source_dir() . "/CMakeLists.txt"
@@ -378,7 +378,7 @@ function! s:cmake_configure_and_generate_with_completion(completion)
 endfunction
 
 
-function! s:cmake_build_current_target(...)
+function s:cmake_build_current_target(...)
   if a:0 > 1
     echom "CMakeBuildCurrentTarget takes one argument -- the dispatcher for the build"
   end
@@ -390,22 +390,22 @@ function! s:cmake_build_current_target(...)
   let g:vim_cmake_build_tool = l:previous
 endfunction
 
-function! s:_do_build_current_target()
+function s:_do_build_current_target()
   call s:_do_build_current_target_with_completion(s:noop)
 endfunction
 
-function! s:noop_function(...)
+function s:noop_function(...)
 endfunction
 
 let s:noop = function('s:noop_function')
 
-function! s:_update_target_and_build(target)
+function s:_update_target_and_build(target)
   call s:update_target(a:target)
   call s:_do_build_current_target()
 endfunction
 
 
-function! s:_do_build_current_target_with_completion(completion)
+function s:_do_build_current_target_with_completion(completion)
   if s:get_cmake_target_file() == v:null
     call s:cmake_get_target_and_run_action(g:tars, 's:_update_target_and_build')
     return
@@ -414,15 +414,15 @@ function! s:_do_build_current_target_with_completion(completion)
   call s:_build_target_with_completion(s:get_cmake_target_name(), a:completion)
 endfunction
 
-function! s:_do_build_all_with_completion(completion)
+function s:_do_build_all_with_completion(completion)
   call s:_build_all_with_completion(a:completion)
 endfunction
 
-function! s:cmake_build_all_with_completion(completion)
+function s:cmake_build_all_with_completion(completion)
   call s:parse_codemodel_json_with_completion(function('s:compose_completions', [function('s:_do_build_all_with_completion'), a:completion]))
 endfunction
 
-function! s:cmake_build_current_target_with_completion(completion)
+function s:cmake_build_current_target_with_completion(completion)
   call s:parse_codemodel_json_with_completion(function('s:compose_completions', [function('s:_do_build_current_target_with_completion'), a:completion]))
 endfunction
 
@@ -435,14 +435,14 @@ func s:is_absolute_path(path)
   endif
 endfunction
 
-function! s:_build_target(target)
+function s:_build_target(target)
   call s:_build_target_with_completion(a:target, v:null)
 endfunction
 
 let g:cmake_last_window = v:null
 let g:cmake_last_buffer = v:null
 
-function! s:_build_target_with_completion(target, completion)
+function s:_build_target_with_completion(target, completion)
   if s:is_absolute_path(s:get_cmake_build_dir())
     let l:directory = s:get_cmake_build_dir()
   else
@@ -479,12 +479,12 @@ if !exists('g:vim_cmake_build_tool')
   let g:vim_cmake_build_tool = 'vsplit'
 endif
 
-function! s:cmake_clean()
+function s:cmake_clean()
   let l:command = 'cmake --build ' . s:get_cmake_build_dir() . ' --target clean'
   exe "vs | exe \"normal \<c-w>L\" | terminal " . l:command
 endfunction
 
-function! s:cmake_build_all()
+function s:cmake_build_all()
   call s:cmake_build_all_with_completion(s:noop)
 endfunction
 
@@ -515,27 +515,27 @@ function s:_build_all_with_completion(completion)
 
 endfunction
 
-function! s:write_cache_file()
+function s:write_cache_file()
   let cache = s:get_cmake_cache_file()
   let serial = s:encode_json(cache)
   let split = split(serial, '\n')
   call writefile(split, $HOME . '/.vim_cmake.json')
 endfunction
 
-function! s:cmake_pick_target()
+function s:cmake_pick_target()
   call s:parse_codemodel_json_with_completion(function('s:_do_cmake_pick_target'))
 endf
 
-function! s:cmake_pick_executable_target()
+function s:cmake_pick_executable_target()
   call s:parse_codemodel_json_with_completion(function('s:_do_cmake_pick_executable_target'))
 endf
 
-function! s:_do_cmake_pick_executable_target()
+function s:_do_cmake_pick_executable_target()
   call s:cmake_get_target_and_run_action(g:execs, 's:update_target')
   call s:dump_current_target()
 endfunction
 
-function! s:_do_cmake_pick_target()
+function s:_do_cmake_pick_target()
   call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
   call s:dump_current_target()
 endfunction
@@ -545,19 +545,19 @@ function s:cmake_close_windows()
   call s:close_last_buffer_if_open()
 endf
 
-function! s:close_last_window_if_open()
+function s:close_last_window_if_open()
   if s:check_if_window_is_alive(g:cmake_last_window)
     call nvim_win_close(g:cmake_last_window, v:true)
   endif
 endf
 
-function! s:close_last_buffer_if_open()
+function s:close_last_buffer_if_open()
   if s:check_if_buffer_is_alive(g:cmake_last_buffer)
     call nvim_buf_delete(g:cmake_last_buffer, {"force": v:true})
   endif
 endf
 
-function! s:_run_current_target(job_id, exit_code, event)
+function s:_run_current_target(job_id, exit_code, event)
   call s:close_last_window_if_open()
   if a:exit_code == 0
     call s:get_only_window()
@@ -566,13 +566,13 @@ function! s:_run_current_target(job_id, exit_code, event)
   let g:vim_cmake_build_tool = g:vim_cmake_build_tool_old
 endf
 
-function! s:_update_target_and_run(target)
+function s:_update_target_and_run(target)
   " echom "_update_target_and_run(" . a:target . ")"
   call s:update_target(a:target)
   call s:_do_run_current_target()
 endfunction
 
-function! s:_do_run_current_target()
+function s:_do_run_current_target()
   " echom "_do_run_current_target() with s:get_cmake_target_file() = " . s:get_cmake_target_file()
   if s:get_cmake_target_file() == '' || s:get_cmake_target_file() == v:null
     " because vimscript doesn't have asynch the below just recursively calls this
@@ -588,12 +588,12 @@ function! s:_do_run_current_target()
   call s:cmake_build_current_target_with_completion(function("s:_run_current_target"))
 endfunction
 
-function! s:cmake_run_current_target()
+function s:cmake_run_current_target()
   " echom "s:cmake_run_current_target()"
   call s:parse_codemodel_json_with_completion(function("s:_do_run_current_target"))
 endfunction
 
-function! s:update_target(target)
+function s:update_target(target)
   call s:set_cmake_target_file(s:get_cmake_build_dir() . '/' . g:tar_to_file[a:target])
   call s:set_cmake_target_relative(g:tar_to_file[a:target])
   call s:set_cmake_target_name(a:target)
@@ -603,11 +603,11 @@ function! s:update_target(target)
   call s:write_cache_file()
 endfunction
 
-function! s:dump_current_target()
+function s:dump_current_target()
   echo "Current target set to '" . s:get_cmake_target_file() . "' with args '" . s:get_cmake_target_args() . "'"
 endfunction
 
-function! s:cmake_run_target_with_name(target)
+function s:cmake_run_target_with_name(target)
   let s:cmake_target_file = s:get_cmake_build_dir() . '/' . g:tar_to_file[a:target]
   try
     exec '!cmake --build ' . s:get_cmake_build_dir() . ' --target ' . a:target
@@ -619,7 +619,7 @@ function! s:cmake_run_target_with_name(target)
   endtry
 endfunction
 
-function! s:cmake_get_target_and_run_action(target_list, action)
+function s:cmake_get_target_and_run_action(target_list, action)
   " echom "s:cmake_get_target_and_run_action([" . join(a:target_list, ",")  . "], " . a:action . ")"
   let l:names = []
   for target in a:target_list
@@ -637,7 +637,7 @@ function! s:cmake_get_target_and_run_action(target_list, action)
 endfunction
 
 " TODO: Fix this breakpoint handling
-function! s:start_gdb(job_id, exit_code, event)
+function s:start_gdb(job_id, exit_code, event)
   if a:exit_code != 0
     return
   endif
@@ -672,7 +672,7 @@ function! s:start_gdb(job_id, exit_code, event)
   exec l:exec
 endfunction
 
-function! s:start_lldb(job_id, exit_code, event)
+function s:start_lldb(job_id, exit_code, event)
   if a:exit_code != 0
     return
   endif
@@ -711,7 +711,7 @@ function! s:start_lldb(job_id, exit_code, event)
   exec 'GdbStartLLDB lldb ' . s:get_cmake_target_file() . l:lldb_init_arg . ' -- ' . s:get_cmake_target_args()
 endfunction
 
-function! s:toggle_file_line_column_breakpoint()
+function s:toggle_file_line_column_breakpoint()
   let l:curpos = getcurpos()
   let l:line_number = l:curpos[1]
   let l:column_number = l:curpos[2]
@@ -723,7 +723,7 @@ function! s:toggle_file_line_column_breakpoint()
   call s:toggle_breakpoint(l:break_string)
 endfunction
 
-function! s:toggle_break_at_main()
+function s:toggle_break_at_main()
   if filereadable($HOME . ".config/vim_cmake/dont_break_at_main")
     silent !rm ~/.config/vim_cmake/dont_break_at_main
   else
@@ -737,11 +737,11 @@ function! s:toggle_break_at_main()
   endif
 endfunction
 
-function! s:should_break_at_main()
+function s:should_break_at_main()
   return !filereadable($HOME . "/.config/vim_cmake/dont_break_at_main")
 endfunction
 
-function! s:toggle_file_line_breakpoint()
+function s:toggle_file_line_breakpoint()
   let l:curpos = getcurpos()
   let l:line_number = l:curpos[1]
 
@@ -752,7 +752,7 @@ function! s:toggle_file_line_breakpoint()
   call s:toggle_breakpoint(l:break_string)
 endfunction
 
-function! g:CMake_list_breakpoints()
+function g:CMake_list_breakpoints()
   let args = []
   let l:bps = s:get_cmake_cache_file()[getcwd()]["targets"][s:get_cmake_target_file()]["breakpoints"]
   for bp in keys(l:bps)
@@ -765,7 +765,7 @@ function! g:CMake_list_breakpoints()
   echo join(args, "\n")
 endfunction
 
-function! s:toggle_breakpoint(break_string)
+function s:toggle_breakpoint(break_string)
   let l:data = s:get_cmake_cache_file()
   let l:breakpoints = l:data[getcwd()]['targets'][s:get_cmake_target_file()]["breakpoints"]
   if has_key(l:breakpoints, a:break_string)
@@ -780,7 +780,7 @@ function! s:toggle_breakpoint(break_string)
 endfunction
 
 " TODO: Fix this breakpoint handling
-function! s:start_nvim_dap_lldb_vscode(job_id, exit_code, event)
+function s:start_nvim_dap_lldb_vscode(job_id, exit_code, event)
   if a:exit_code != 0
     return
   endif
@@ -816,26 +816,26 @@ function! s:start_nvim_dap_lldb_vscode(job_id, exit_code, event)
   exec 'DebugLldb ' . s:get_cmake_target_file() . ' --lldbinit ' . l:lldb_init_arg . ' -- ' . s:get_cmake_target_args()
 endfunction
 
-function! s:cmake_debug_current_target_nvim_dap_lldb_vscode()
+function s:cmake_debug_current_target_nvim_dap_lldb_vscode()
   let g:vim_cmake_debugger = 'nvim_dap_lldb_vscode'
   call s:cmake_debug_current_target()
 endf
 
-function! s:cmake_debug_current_target_lldb()
+function s:cmake_debug_current_target_lldb()
   let g:vim_cmake_debugger = 'lldb'
   call s:cmake_debug_current_target()
 endf
 
-function! s:cmake_debug_current_target_gdb()
+function s:cmake_debug_current_target_gdb()
   let g:vim_cmake_debugger = 'gdb'
   call s:cmake_debug_current_target()
 endf
 
-function! s:cmake_debug_current_target()
+function s:cmake_debug_current_target()
   call s:parse_codemodel_json_with_completion(function("s:_do_debug_current_target"))
 endfunction
 
-function! s:_do_debug_current_target()
+function s:_do_debug_current_target()
   if s:get_cmake_target_file() == v:null || get(g:tar_to_file, s:get_cmake_target_name(), v:null) == v:null
     call s:cmake_get_target_and_run_action(g:execs, 's:update_target')
   endif
@@ -851,17 +851,17 @@ function! s:_do_debug_current_target()
   endif
 endfunction
 
-function! s:cmake_set_cmake_args(...)
+function s:cmake_set_cmake_args(...)
   let l:arguments = a:000
   call s:set_cmake_arguments(l:arguments)
   call s:write_cache_file()
 endfunction
 
-function! g:GetCMakeArgs()
+function g:GetCMakeArgs()
   return s:get_cmake_arguments()
 endfunction
 
-function! s:cmake_set_current_target_run_args(args)
+function s:cmake_set_current_target_run_args(args)
   if s:get_cmake_target_file() ==? ''
     call s:cmake_get_target_and_run_action(g:tars, 's:update_target')
     return
@@ -871,23 +871,23 @@ function! s:cmake_set_current_target_run_args(args)
   call s:dump_current_target()
 endfunction
 
-function! g:GetCMakeCurrentTargetRunArgs()
+function g:GetCMakeCurrentTargetRunArgs()
   let c = s:get_cmake_single_target_cache()
   call s:set_if_empty(c, "args", "")
   return c.args
 endfunction
 
-function! s:get_cmake_targets_object()
+function s:get_cmake_targets_object()
   return g:state.dir_cache_object.targets
 endfunction
 
-function! s:get_cmake_single_target_cache()
+function s:get_cmake_single_target_cache()
   let c = s:get_cmake_targets_object()
   call s:set_if_empty(c, s:get_cmake_target_file(), {})
   return c[s:get_cmake_target_file()]
 endfunction
 
-function! s:cmake_create_file(...)
+function s:cmake_create_file(...)
   if len(a:000) > 2 || len(a:000) == 0
     echo 'CMakeCreateFile requires 1 or 2 arguments: e.g. Directory File for `Directory/File.{cpp,h}`'
     return
@@ -906,19 +906,19 @@ function! s:cmake_create_file(...)
   end
 endfunction
 
-function! s:cmake_update_build_dir(...)
+function s:cmake_update_build_dir(...)
   let dir = a:1
   call s:set_cmake_build_dir(dir)
   call s:write_cache_file()
 endfunction
 
-function! s:cmake_update_source_dir(...)
+function s:cmake_update_source_dir(...)
   let dir = a:1
   call s:set_cmake_source_dir(dir)
   call s:write_cache_file()
 endfunction
 
-function! s:get_cmake_dir_cache_object()
+function s:get_cmake_dir_cache_object()
   return g:state.dir_cache_object
 endfunction
 
@@ -930,7 +930,7 @@ function g:GetCMakeBuildDir()
   return s:get_cmake_build_dir()
 endfunction
 
-function! s:cmake_open_cache_file()
+function s:cmake_open_cache_file()
   exe 'e ' . s:get_cmake_build_dir() . '/CMakeCache.txt'
 endf
 
