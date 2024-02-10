@@ -87,10 +87,10 @@ function s:get_cmake_arguments()
 endfunction
 
 function s:get_cmake_build_dir()
-  return g:state.cmake_build_dir
+  return g:state.build_dir
 endfunction
 function s:set_cmake_build_dir(value)
-  let g:cmake_build_dir = a:value
+  let g:state.build_dir = a:value
 endfunction
 
 function s:get_cmake_cache_file()
