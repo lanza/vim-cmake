@@ -2,7 +2,6 @@
 " Maintainer: Nathan Lanza <https://github.com/lanza>
 " Version:    0.1
 
-let s:App = {}
 function s:find_current_dir_or_parent_in_cache_file(file)
   let s:joined = getcwd()
   let s:components = split(s:joined,"/")
