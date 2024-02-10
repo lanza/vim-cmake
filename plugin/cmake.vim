@@ -100,10 +100,6 @@ function s:set_cmake_cache_file(value)
   let g:state.cache_object = a:value
 endfunction
 
-function! s:set_if_empty(object, key, val)
-  if !has_key(a:object, a:key)
-    let a:object[a:key] = a:val
-  endif
 endfunction
 
 " this needs to be wrapped due to the need to use on_exit to pipeline the config
@@ -189,6 +185,11 @@ function! s:parse_codemodel_json_with_completion(completion)
   endif
 endfunction
 
+function! s:set_if_empty(object, key, val)
+  if !has_key(a:object, a:key)
+    let a:object[a:key] = a:val
+  endif
+endfunction
 
 function! s:initialize_cache_file()
   " initialize some variables
