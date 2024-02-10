@@ -884,7 +884,6 @@ function! s:cmake_create_file(...)
     silent exec "!touch " . l:header
     silent exec "!touch " . l:source
   end
-
 endfunction
 
 function! s:cmake_set_build_dir(...)
