@@ -50,10 +50,10 @@ let g:state = {
     \ }
 
 function s:get_cmake_target_file()
-  return g:cmake_target_file
+  return g:state.g:state.dir_cache_object.current_target_file
 endfunction
 function s:set_cmake_target_file(value)
-  let g:cmake_target_file = a:value
+  let g:state.dir_cache_object.current_target_file = a:value
 endfunction
 call s:set_cmake_target_file(v:null)
 
@@ -118,6 +118,12 @@ function! s:initialize_cache_file()
   endif
 
   let g:state.dir_cache_object = get(s:get_cmake_cache_file(), getcwd(), {})
+
+  let l:dco = g:state.g:state.dir_cache_object
+
+  if !has_key(l:dco, "current_target_file")
+    let l:dco.current_target_file = v:null
+  endif
 endfunction
 
 function! g:CMake_get_cache_file()
