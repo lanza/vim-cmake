@@ -42,6 +42,12 @@ function! s:encode_json(object) abort
   endif
 endfunction
 
+function! s:set_if_empty(object, key, val)
+  if !has_key(a:object, a:key)
+    let a:object[a:key] = a:val
+  endif
+endfunction
+
 let g:state = {
     \ "cmake_tool": "cmake",
     \ "cache_file_path": $HOME . '/.vim_cmake.json',
@@ -191,12 +197,6 @@ function! s:parse_codemodel_json_with_completion(completion)
   else
     call s:_do_parse_codemodel_json()
     call a:completion()
-  endif
-endfunction
-
-function! s:set_if_empty(object, key, val)
-  if !has_key(a:object, a:key)
-    let a:object[a:key] = a:val
   endif
 endfunction
 
