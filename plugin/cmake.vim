@@ -108,25 +108,6 @@ function s:set_cmake_cache_file(value)
   let g:state.cache_object = a:value
 endfunction
 
-function! s:initialize_cache_file()
-  if filereadable(g:state.cache_file_path)
-    let l:contents = readfile(g:state.cache_file_path)
-    let l:json_string = join(l:contents, "\n")
-
-    call s:set_cmake_cache_file(s:decode_json(l:json_string))
-  else
-    call s:set_cmake_cache_file(s:decode_json('{}'))
-  endif
-
-  let g:state.dir_cache_object = get(s:get_cmake_cache_file(), getcwd(), {})
-
-  let l:dco = g:state.g:state.dir_cache_object
-
-  if !has_key(l:dco, "current_target_file")
-    let l:dco.current_target_file = v:null
-  endif
-endfunction
-
 function! g:CMake_get_cache_file()
   return s:get_cmake_cache_file()
 endfunction
@@ -215,6 +196,29 @@ function! s:parse_codemodel_json_with_completion(completion)
   endif
 endfunction
 
+
+function! s:initialize_cache_file()
+  " load cache file from disk
+  if filereadable(g:state.cache_file_path)
+    let l:contents = readfile(g:state.cache_file_path)
+    let l:json_string = join(l:contents, "\n")
+
+    call s:set_cmake_cache_file(s:decode_json(l:json_string))
+  else
+    call s:set_cmake_cache_file(s:decode_json('{}'))
+  endif
+
+  " load directory cache object
+  if !has_key(g:state.cache_object, getcwd())
+    let g:state.cache_object[getcwd()] = {}
+  endif
+  let g:state.dir_cache_object = g:state.cache_object[getcwd()]
+
+  " initialize directory cache object
+  let l:dco = g:state.dir_cache_object
+  if !has_key(l:dco, "current_target_file")
+    let l:dco.current_target_file = v:null
+  endif
 call s:initialize_cache_file()
 
 call s:set_cmake_target_file(get(g:state.dir_cache_object, "current_target_file", v:null))
