@@ -155,8 +155,8 @@ endfunction
 " this needs to be wrapped due to the need to use on_exit to pipeline the config
 function s:_do_parse_codemodel_json()
   let l:build_dir = s:get_cmake_build_dir()
-  let g:cmake_query_response = l:build_dir . '/.cmake/api/v1/reply/'
-  let l:codemodel_file = globpath(g:cmake_query_response, 'codemodel*')
+  let l:cmake_query_response = l:build_dir . '/.cmake/api/v1/reply/'
+  let l:codemodel_file = globpath(l:cmake_query_response, 'codemodel*')
   let l:codemodel_contents = readfile(l:codemodel_file)
   let l:json_string = join(l:codemodel_contents, "\n")
 
@@ -178,7 +178,7 @@ function s:_do_parse_codemodel_json()
   for target in targets_dicts
     let l:jsonFile = target['jsonFile']
     let l:name = target['name']
-    let l:file = readfile(g:cmake_query_response . l:jsonFile)
+    let l:file = readfile(l:cmake_query_response . l:jsonFile)
     let l:json_string = join(l:file, "\n")
     let l:target_file_data = s:decode_json(l:json_string)
     if has_key(l:target_file_data, 'artifacts')
