@@ -80,8 +80,8 @@ function s:set_cmake_target_file(value)
 endfunction
 
 function s:add_cmake_target_to_target_list(target_name)
-  let l:file = s:get_cmake_build_dir() . '/' . g:tar_to_file[a:target_name]
-  let l:relative = g:tar_to_file[a:target_name]
+  let l:file = s:get_cmake_build_dir() . '/' . g:tar_to_relative[a:target_name]
+  let l:relative = g:tar_to_relative[a:target_name]
 
   call s:set_if_empty(s:get_cmake_dir_cache_object().targets, l:file, {
       \ "current_target_file" : l:file,
@@ -173,7 +173,7 @@ function s:_do_parse_codemodel_json()
 
   let g:state.dir_cache_object.name_relative_pairs = []
 
-  let g:tar_to_file = {}
+  let g:tar_to_relative = {}
 
   for target in targets_dicts
     let l:jsonFile = target['jsonFile']
@@ -193,7 +193,7 @@ function s:_do_parse_codemodel_json()
             \ "is_exec": l:is_exec,
             \ "is_artifact": v:true
             \ })
-      let g:tar_to_file[l:name] = l:path
+      let g:tar_to_relative[l:name] = l:path
     else
       let l:type = l:target_file_data['type']
       call add(s:get_name_relative_pairs() , {
@@ -624,7 +624,7 @@ endfunction
 function s:select_target(target_name)
   call s:add_cmake_target_to_target_list(a:target_name)
 
-  let l:file = s:get_cmake_build_dir() . '/' . g:tar_to_file[a:target_name]
+  let l:file = s:get_cmake_build_dir() . '/' . g:tar_to_relative[a:target_name]
   call s:set_cmake_target_file(l:file)
 
   call s:write_cache_file()
@@ -635,7 +635,7 @@ function s:dump_current_target()
 endfunction
 
 function s:cmake_run_target_with_name(target)
-  let s:cmake_target_file = s:get_cmake_build_dir() . '/' . g:tar_to_file[a:target]
+  let s:cmake_target_file = s:get_cmake_build_dir() . '/' . g:tar_to_relative[a:target]
   try
     exec '!cmake --build ' . s:get_cmake_build_dir() . ' --target ' . a:target
   catch /.*/
