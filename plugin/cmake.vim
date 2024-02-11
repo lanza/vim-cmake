@@ -206,15 +206,6 @@ function s:_do_parse_codemodel_json()
   return 1
 endf
 
-function g:Parse_codemodel_json()
-  let l:build_dir = s:get_cmake_build_dir()
-  if !isdirectory(l:build_dir . '/.cmake/api/v1/reply')
-    echom 'Must configure and generate first'
-    call s:assure_query_reply_with_completion(function('s:_do_parse_codemodel_json'))
-  endif
-  return s:_do_parse_codemodel_json()
-endfunction
-
 function s:do_all_completions(...)
   for Completion in a:000
     if type(Completion) == v:t_func
