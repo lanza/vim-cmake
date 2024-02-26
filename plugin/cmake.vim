@@ -61,6 +61,7 @@ let g:state = {
     \ "cmake_tool": "cmake",
     \ "cache_file_path": $HOME . '/.vim_cmake.json',
     \ "generator": 'Ninja',
+    \ "build_command": "ninja_distcc",
     \ "template_file": expand(":p:h:h" . "/CMakeLists.txt"),
     \ "cache_object": v:null,
     \ "dir_cache_object": v:null,
@@ -479,20 +480,20 @@ function s:_build_target_with_completion(target, completion)
     call s:get_only_window()
     call termopen(l:command, { "on_exit": a:completion })
   elseif g:vim_cmake_build_tool ==? 'vim-dispatch'
-    let &makeprg = 'ninja -C ' . l:directory . ' ' . a:target
+    let &makeprg = s:get_state().build_command . ' -C ' . l:directory . ' ' . a:target
     " completion not honored
     Make
   elseif g:vim_cmake_build_tool ==? 'Makeshift'
-    let &makeprg = 'ninja ' . a:target
+    let &makeprg = s:get_state.build_command . ' ' . a:target
     let b:makeshift_root = l:directory
     " completion not honored
     MakeshiftBuild
   elseif g:vim_cmake_build_tool ==? 'make'
-    let &makeprg = 'ninja -C ' . l:directory . ' ' . a:target
+    let &makeprg = s:get_state().build_command . ' -C ' . l:directory . ' ' . a:target
     " completion not honored
     make
   elseif g:vim_cmake_build_tool ==? 'job'
-    let l:cmd = 'ninja -C ' . l:directory . ' ' . a:target
+    let l:cmd = s:get_state().build_command . ' -C ' . l:directory . ' ' . a:target
     call jobstart(cmd, {"on_exit": a:completion })
   else
     echo 'Your g:vim_cmake_build_tool value is invalid. Please set it to either vsplit, Makeshift, vim-dispatch or make.'
@@ -518,19 +519,19 @@ function s:_build_all_with_completion(completion)
     call s:get_only_window()
     call termopen(l:command, { "on_exit": a:completion })
   elseif g:vim_cmake_build_tool ==? 'Makeshift'
-    let &makeprg = 'ninja'
+    let &makeprg = s:get_state().build_command
     let cwd = getcwd()
     let b:makeshift_root = cwd . '/' . s:get_cmake_build_dir()
     " completion not honored
     MakeshiftBuild
   elseif g:vim_cmake_build_tool ==? 'vim-dispatch'
     let cwd = getcwd()
-    let &makeprg = 'ninja -C ' . cwd . '/' . s:get_cmake_build_dir()
+    let &makeprg = s:get_state().build_command . ' -C ' . cwd . '/' . s:get_cmake_build_dir()
     " completion not honored
     Make
   elseif g:vim_cmake_build_tool ==? 'make'
     let cwd = getcwd()
-    let &makeprg = 'ninja -C ' . cwd . '/' . s:get_cmake_build_dir()
+    let &makeprg = s:get_state().build_command . ' -C ' . cwd . '/' . s:get_cmake_build_dir()
     " completion not honored
     make
   else
@@ -658,7 +659,7 @@ function s:cmake_get_target_and_run_action(name_relative_pairs, action)
     " this has to be unwrapped because a:action is a string
     exec "call " . a:action . "(\"" . l:names[0] . "\")"
   else
-    set makeprg=ninja
+    let &makeprg = s:get_state().build_command
     call fzf#run({'source': l:names, 'sink': function(a:action), 'down': len(l:names) + 2})
   endif
 endfunction
